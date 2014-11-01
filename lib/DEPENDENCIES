@@ -1,0 +1,20 @@
+### [Pi4J][]
+
+**Download: http://pi4j.com/download.html**
+**Installation: http://pi4j.com/install.html**
+
+The following jars should be placed in a pi4j directory in this lib directory (`lib/pi4j/*.jar`):
+ - (I don't know right now, just put all the jars in)
+
+
+### [Gson][]
+
+**Download: https://code.google.com/p/google-gson/**
+
+Download [`gson-2.3.jar`][gson-2.3.jar] to `lib/gson-2.3.jar`.
+
+
+
+[Pi4J]: http://pi4j.com/index.html
+[Gson]: https://sites.google.com/site/gson/Home
+[gson-2.3.jar]: http://search.maven.org/#artifactdetails|com.google.code.gson|gson|2.3|jar
