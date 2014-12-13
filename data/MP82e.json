@@ -1,0 +1,8 @@
+{
+  "id": 0,
+  "name": "MP-82",
+  "engineType": "Electric",
+  "axleDiameter": 1.0,
+  "engineShaftDiameter": 2.0,
+  "tireDiameter": 3.0
+}

@@ -1,0 +1,8 @@
+{
+  "id": 3,
+  "name": "MP-252",
+  "engineType": "ICE",
+  "axleDiameter": 7.0,
+  "engineShaftDiameter": 8.0,
+  "tireDiameter": 9.0
+}
