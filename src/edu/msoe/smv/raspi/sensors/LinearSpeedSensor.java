@@ -13,7 +13,7 @@ public class LinearSpeedSensor extends DataCollector {
 	 * The {@link edu.msoe.smv.raspi.sensors.RotationalSpeedSensor} this LinearSpeedSensor wraps.
 	 * <p/>
 	 * Whenever {@link #getLinearSpeed} or {@link #getValue} is called, {@link #computeLinearSpeed} is also called to
-	 * update {@link #linearSpeed}
+	 * fetch {@link #linearSpeed}
 	 */
 	private RotationalSpeedSensor rotationalSpeedSensor;
 

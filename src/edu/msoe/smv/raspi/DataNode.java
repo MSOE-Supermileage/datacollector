@@ -11,41 +11,18 @@ import java.util.Date;
  */
 public class DataNode {
 
-	private final double altitude;
-	private final double batteryVoltage;
 	private final Date date;
-	private final double latitude;
-	private final double longitude;
 	private final double rpm;
+	private final double speed;
 
-	public DataNode(double rpm, double batteryVoltage, double latitude, double longitude, double altitude) {
+	public DataNode(double rpm, double speed) {
 		this.rpm = rpm;
-		this.batteryVoltage = batteryVoltage;
-		this.latitude = latitude;
-		this.longitude = longitude;
-		this.altitude = altitude;
-
+		this.speed = speed;
 		this.date = new Date();
-	}
-
-	public double getAltitude() {
-		return altitude;
-	}
-
-	public double getBatteryVoltage() {
-		return batteryVoltage;
 	}
 
 	public Date getDate() {
 		return date;
-	}
-
-	public double getLatitude() {
-		return latitude;
-	}
-
-	public double getLongitude() {
-		return longitude;
 	}
 
 	public double getRpm() {
