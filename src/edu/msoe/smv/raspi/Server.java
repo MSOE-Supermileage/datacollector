@@ -23,7 +23,7 @@ public class Server implements Runnable {
 	/**
 	 * The singleton instance of this class
 	 */
-	public static volatile Server instance;
+	private static volatile Server instance;
 
 	/**
 	 * The list of {@link edu.msoe.smv.raspi.DataNode DataNodes} to send. It is recommended that Vector or another
