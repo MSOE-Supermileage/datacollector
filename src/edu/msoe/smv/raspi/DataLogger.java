@@ -38,6 +38,7 @@ public class DataLogger {
 	 */
 	public void log(DataNode dataNode) {
 		writer.println(dataNode.toCSV());
+		writer.flush();
 	}
 
 }
