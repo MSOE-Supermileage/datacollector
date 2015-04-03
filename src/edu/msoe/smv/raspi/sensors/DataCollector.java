@@ -25,7 +25,7 @@ public abstract class DataCollector extends Subject {
 	 * @param gpioPin the GPIO pin
 	 * @return the RaspiPin that corresponds to <tt>gpioPin</tt>
 	 */
-	protected Pin getRaspiPin(int gpioPin) {
+	public static Pin getRaspiPin(int gpioPin) {
 		Pin result;
 
 		switch (gpioPin) {
