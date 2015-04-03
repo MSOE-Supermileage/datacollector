@@ -1,5 +1,7 @@
 package edu.msoe.smv.raspi.sensors;
 
+import com.pi4j.io.gpio.GpioFactory;
+import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.trigger.GpioCallbackTrigger;
 
@@ -39,13 +41,15 @@ public class RotationalSpeedSensor extends DataCollector {
 		this.numberOfInterruptsPerRotation = numberOfInterruptsPerRotation;
 		this.lastInterrupt = System.currentTimeMillis();
 
-		GpioCallbackTrigger callbackTrigger = new GpioCallbackTrigger(pinState, new Callable<Void>() {
+		final GpioPinDigitalInput rotSpeedSensor =
+				GpioFactory.getInstance().provisionDigitalInputPin(DataCollector.getRaspiPin(pinNum), "rotational speed sensor");
+		rotSpeedSensor.addTrigger(new GpioCallbackTrigger(pinState, new Callable<Void>() {
 			@Override
 			public Void call() throws Exception {
 				computeRotationalSpeed();
 				return null;
 			}
-		});
+		}));
 	}
 
 	/**
@@ -70,7 +74,9 @@ public class RotationalSpeedSensor extends DataCollector {
 	}
 
 	/**
-	 * Returns the rotational speed of this sensor in revolutions per minute
+	 * Returns the rotational speed of this sensor in revolutions per minute.
+	 * <p/>
+	 * Note that this will only show good data after {@link #computeRotationalSpeed()} has been called.
 	 *
 	 * @return the rotational speed of this sensor in revolutions per minute
 	 */
