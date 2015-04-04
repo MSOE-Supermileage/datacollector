@@ -2,31 +2,58 @@ package edu.msoe.smv.raspi;
 
 import com.google.gson.GsonBuilder;
 
-import java.util.Date;
-
 /**
  * This class represents the state of the vehicle at a specific point in time
  *
  * @author matt
  */
 public class DataNode {
-
-	private final Date date;
+	/**
+	 * The UNIX epoch when this DataNode was created
+	 */
+	private final long unixTime;
+	/**
+	 * The rpm at this DataNode
+	 */
 	private final double rpm;
+	/**
+	 * The speed at this DataNode
+	 */
 	private final double speed;
 
+	/**
+	 * Constructs a new DataNode
+	 * @param rpm the RPM at this DataNode
+	 * @param speed the speed at this DataNode
+	 */
 	public DataNode(double rpm, double speed) {
 		this.rpm = rpm;
 		this.speed = speed;
-		this.date = new Date();
+		this.unixTime = System.currentTimeMillis();
 	}
 
-	public Date getDate() {
-		return date;
+	/**
+	 * Returns the UNIX epoch time when this DataNode was created
+	 * @return the UNIX epoch time when this DataNode was created
+	 */
+	public long getUnixTime() {
+		return unixTime;
 	}
 
+	/**
+	 * Returns the RPM at this DataNode
+	 * @return the RPM at this DataNode
+	 */
 	public double getRpm() {
 		return rpm;
+	}
+
+	/**
+	 * Returns the speed at this DataNode
+	 * @return the speed at this DataNode
+	 */
+	public double getSpeed() {
+		return speed;
 	}
 
 	/**
@@ -36,7 +63,7 @@ public class DataNode {
 	 * <pre>{
 	 *     "altitude": 5.0,
 	 *     "batteryVoltage": 2.0,
-	 *     "date": "Oct 25, 2014 2:04:23 PM",
+	 *     "unixTime": 1414263863,
 	 *     "latitude": 3.0,
 	 *     "longitude": 5.0,
 	 *     "rpm": 1.0
@@ -58,6 +85,6 @@ public class DataNode {
 	 * @return a string representation of this DataNode as comma-separated values
 	 */
 	public String toCSV() {
-		return date.getTime() + "," + rpm + "," + speed;
+		return unixTime + "," + rpm + "," + speed;
 	}
 }
