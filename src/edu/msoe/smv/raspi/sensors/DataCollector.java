@@ -2,9 +2,8 @@ package edu.msoe.smv.raspi.sensors;
 
 import com.pi4j.io.gpio.Pin;
 import com.pi4j.io.gpio.RaspiPin;
-import edu.msoe.smv.raspi.Subject;
 
-public abstract class DataCollector extends Subject {
+public abstract class DataCollector {
 	/**
 	 * The pin from which data is collected
 	 */
