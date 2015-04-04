@@ -22,6 +22,12 @@ public class Main {
 		// set VehicleAttributes vehicle
 		if (args.length > 0) {
 			setVehicle(args[0]);
+		} else {
+			System.out.println("You must specify which vehicle this is being run on.");
+			System.out.println("For example:");
+			System.out.println("\tsudo pi4j -r Raspberry_Pi.jar MP82");
+			System.out.println("\tsudo java -jar Raspberry_Pi.jar MP82");
+			System.exit(1);
 		}
 		System.out.println(vehicle);
 		try {
