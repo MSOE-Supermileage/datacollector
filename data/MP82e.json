@@ -4,5 +4,5 @@
   "engineType": "Electric",
   "axleDiameter": 1.0,
   "engineShaftDiameter": 2.0,
-  "tireDiameter": 3.0
+  "tireDiameter": 20.0
 }
