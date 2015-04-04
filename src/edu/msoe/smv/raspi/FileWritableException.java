@@ -1,6 +1,8 @@
 package edu.msoe.smv.raspi;
 
-public class FileWritableException extends RuntimeException {
+import java.io.IOException;
+
+public class FileWritableException extends IOException {
 	public FileWritableException(String s) {
 		super(s);
 	}

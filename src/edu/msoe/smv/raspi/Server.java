@@ -1,7 +1,6 @@
 package edu.msoe.smv.raspi;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -66,9 +65,11 @@ public class Server implements Runnable {
 		this.socket = new DatagramSocket(this.port);
 		try {
 			this.dataLogger = new DataLogger(new File("/home/pi/data_" + new Date().toString() + ".csv"));
-		} catch (FileNotFoundException e) {
+		} catch (IOException e) {
 			e.printStackTrace();
-			System.err.println("\nFile not found");
+			System.out.println("Encountered an exception when creating the data logger.");
+			System.out.println("Data will NOT be logged to a file.");
+			this.dataLogger = null;
 		}
 	}
 
@@ -165,11 +166,14 @@ public class Server implements Runnable {
 				// lets stay away from IndexOutOfBoundsException, mmk?
 				if (nodeList.size() > 0) {
 //					System.out.println("removing element");
+					System.out.println("nodeList.size() = " + nodeList.size());
 					DataNode dn = nodeList.remove(0);
 					System.out.println("nodeList.size() = " + nodeList.size());
 //					data = dn.toString();
 //					buf = data.getBytes();
-					dataLogger.log(dn);
+					if (this.dataLogger != null) {
+						this.dataLogger.log(dn);
+					}
 				}
 //					dataLogger.log(new DataNode(
 // 							Math.random() * (Integer.MAX_VALUE >> 1), Math.random() * (Integer.MAX_VALUE >> 1)));
