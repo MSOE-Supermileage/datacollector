@@ -1,10 +1,12 @@
 package edu.msoe.smv.raspi;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.SocketAddress;
 import java.net.SocketException;
+import java.util.Date;
 import java.util.List;
 
 public class Server implements Runnable {
@@ -32,7 +34,7 @@ public class Server implements Runnable {
 	 * @see java.util.Collections.SynchronizedList
 	 * @see java.util.Vector
 	 */
-	private List<DataNode> nodeList;
+	private final List<DataNode> nodeList;
 	/**
 	 * The port used for sending data.
 	 */
@@ -45,6 +47,10 @@ public class Server implements Runnable {
 	 * The socket to send datagrams to and receive datagrams from.
 	 */
 	private DatagramSocket socket;
+	/**
+	 * The {@link DataLogger} used to log data locally
+	 */
+	private DataLogger dataLogger;
 
 	/**
 	 * Creates a server instance that will send the elements of {@code nodeList} over the specified port.
@@ -58,6 +64,12 @@ public class Server implements Runnable {
 		this.port = port;
 		this.runServer = true;
 		this.socket = new DatagramSocket(this.port);
+		try {
+			this.dataLogger = new DataLogger(new File("/home/pi/data_" + new Date().toString() + ".csv"));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			System.err.println("\nFile not found");
+		}
 	}
 
 	/**
@@ -121,6 +133,10 @@ public class Server implements Runnable {
 		return nodeList;
 	}
 
+	public void setLogger(DataLogger dataLogger) {
+		this.dataLogger = dataLogger;
+	}
+
 	/**
 	 * When an object implementing interface {@code Runnable} is used to create a thread, starting the thread causes the
 	 * object's {@code run} method to be called in that separately executing thread.
@@ -132,42 +148,48 @@ public class Server implements Runnable {
 	@Override
 	public void run() {
 		while (runServer) {
+			/*try {*/
+			// create a dummy buffer to store received data
+			byte[] buf = new byte[256];
+			DatagramPacket packet = new DatagramPacket(buf, buf.length);
+			// NOTE This is blocking! It must receive some data to continue, so send the Pi data to get data.
+//			socket.receive(packet);
+
+			// get the data to send
+			synchronized (nodeList) {
+				String data;
+				// dummy data
+//				data = "" + Math.random() * (Integer.MAX_VALUE >> 1);
+//				buf = data.getBytes();
+
+				// lets stay away from IndexOutOfBoundsException, mmk?
+				if (nodeList.size() > 0) {
+//					System.out.println("removing element");
+					DataNode dn = nodeList.remove(0);
+					System.out.println("nodeList.size() = " + nodeList.size());
+//					data = dn.toString();
+//					buf = data.getBytes();
+					dataLogger.log(dn);
+				}
+//					dataLogger.log(new DataNode(
+// 							Math.random() * (Integer.MAX_VALUE >> 1), Math.random() * (Integer.MAX_VALUE >> 1)));
+			}
+
+			// send the data
+//				SocketAddress address = packet.getSocketAddress();
+//				packet = new DatagramPacket(buf, buf.length, address);
+//				socket.send(packet);
+
 			try {
-				// create a dummy buffer to store received data
-				byte[] buf = new byte[256];
-				DatagramPacket packet = new DatagramPacket(buf, buf.length);
-				// NOTE This is blocking! It must receive some data to continue, so send the Pi data to get data.
-				socket.receive(packet);
-
-				// get the data to send
-				synchronized (this) {
-					String data;
-					// dummy data
-					data = "" + Math.random() * (Integer.MAX_VALUE >> 1);
-					buf = data.getBytes();
-
-					// lets stay away from IndexOutOfBoundsException, mmk?
-					// if (nodeList.size() >= 0) {
-					// 	data = nodeList.remove(0).toString();
-					//     buf = data.getBytes();
-					// }
-				}
-
-				// send the data
-				SocketAddress address = packet.getSocketAddress();
-				packet = new DatagramPacket(buf, buf.length, address);
-				socket.send(packet);
-
-				try {
-					Thread.sleep(SEND_INTERVAL);
-				} catch (InterruptedException e) {
-					System.err.println("Failed to sleep for " + SEND_INTERVAL + " ms. Continuing...");
-				}
-			} catch (IOException e) {
+				Thread.sleep(50);
+			} catch (InterruptedException e) {
+				System.err.println("Failed to sleep for " + SEND_INTERVAL + " ms. Continuing...");
+			}
+			/*} catch (IOException e) {
 				System.err.println("An IOException occurred while send/receiving data. Shutting down server.");
 				e.printStackTrace();
 				runServer = false;
-			}
+			}*/
 		}
 	}
 }

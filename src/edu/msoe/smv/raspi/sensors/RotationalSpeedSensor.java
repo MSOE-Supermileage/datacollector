@@ -2,9 +2,13 @@ package edu.msoe.smv.raspi.sensors;
 
 import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
+import com.pi4j.io.gpio.PinPullResistance;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.trigger.GpioCallbackTrigger;
+import edu.msoe.smv.VehicleAttributes;
+import edu.msoe.smv.raspi.DataNode;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -27,6 +31,7 @@ public class RotationalSpeedSensor extends DataCollector {
 	 * The rotation speed of this sensor in radians/second
 	 */
 	private double rotationalSpeed;
+	private List<DataNode> nodeList;
 
 	/**
 	 * TODO
@@ -42,7 +47,7 @@ public class RotationalSpeedSensor extends DataCollector {
 		this.lastInterrupt = System.currentTimeMillis();
 
 		final GpioPinDigitalInput rotSpeedSensor =
-				GpioFactory.getInstance().provisionDigitalInputPin(DataCollector.getRaspiPin(pinNum), "rotational speed sensor");
+				GpioFactory.getInstance().provisionDigitalInputPin(DataCollector.getRaspiPin(pinNum), PinPullResistance.PULL_UP);
 		rotSpeedSensor.addTrigger(new GpioCallbackTrigger(pinState, new Callable<Void>() {
 			@Override
 			public Void call() throws Exception {
@@ -59,9 +64,19 @@ public class RotationalSpeedSensor extends DataCollector {
 	 */
 	private void computeRotationalSpeed() {
 		double dTheta = (2.0 * Math.PI) / numberOfInterruptsPerRotation;            // radians
-		double dt = Math.abs(System.currentTimeMillis() - lastInterrupt) / 1000.0;  // seconds
+		long currentInterrupt = System.currentTimeMillis();
+		double dt = Math.abs(currentInterrupt - lastInterrupt) / 1000.0;            // seconds
+		this.lastInterrupt = currentInterrupt;
 
 		this.rotationalSpeed = dTheta / dt;     // radians per second
+
+		if (nodeList != null) {
+			double rpm = getValue();
+			double speed = rpm * VehicleAttributes.MP82.getTireDiam();  // inches per second
+			speed *= 3600.0;                                            // inches per hour
+			speed /= 63360.0;                                           // miles per hour
+			nodeList.add(new DataNode(rpm, speed));
+		}
 	}
 
 	/**
@@ -82,9 +97,9 @@ public class RotationalSpeedSensor extends DataCollector {
 	 */
 	@Override
 	public double getValue() {
-		double result = this.rotationalSpeed;
-		result *= 60.0;                        // radians per minute
-		result /= 2.0 * Math.PI;               // revolutions per minute
+		double result = this.rotationalSpeed;   // radians per second
+		result *= 60.0;                         // radians per minute
+		result /= (2.0 * Math.PI);              // revolutions per minute
 
 		return result;
 	}
@@ -96,5 +111,9 @@ public class RotationalSpeedSensor extends DataCollector {
 	 */
 	public double getRotationalSpeed() {
 		return this.rotationalSpeed;
+	}
+
+	public void setNodeList(List<DataNode> list) {
+		this.nodeList = list;
 	}
 }
