@@ -37,6 +37,8 @@ public class DataLogger {
 
 		this.logFile = file;
 		this.writer = new PrintWriter(new FileOutputStream(logFile, true));
+		// print header line to log file
+		this.writer.println("Milliseconds,RPM,MPH");
 	}
 
 	/**
