@@ -29,21 +29,30 @@ public class Main {
 		}
 		System.out.println("Chosen vehicle: " + vehicle);
 
+		final List<DataNode> androidNodeList = new LinkedList<>();
 		final List<DataNode> nodeList = new LinkedList<>();
 		try {
-			// init server
-			Server server = Server.getInstance(nodeList);
-			Thread serverThread = new Thread(server);
-			server.enableServer(true);
+			// init android server
+			AndroidServer androidServer = AndroidServer.getInstance(nodeList);
+			Thread serverThread = new Thread(androidServer);
+			androidServer.enableServer(true);
 			System.out.println("Made server");
+
+			// init logging server
+			LoggingServer loggingServer = LoggingServer.getInstance(androidNodeList);
+			Thread loggingThread = new Thread(loggingServer);
+			loggingServer.enableServer(true);
+			System.out.println("Made logging server");
 
 			// init rotational speed sensor
 			final RotationalSpeedSensor rotationalSpeedSensor = new RotationalSpeedSensor(7, PinState.HIGH, 1);
 			rotationalSpeedSensor.setNodeList(nodeList);
+			rotationalSpeedSensor.setAndroidNodeList(androidNodeList);
 			System.out.println("Made rotational speed sensor");
 
 			// start threads
 			serverThread.start();
+			loggingThread.start();
 			System.out.println("Started server thread");
 		} catch (SocketException e) {
 			e.printStackTrace();

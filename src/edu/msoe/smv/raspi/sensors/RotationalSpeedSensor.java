@@ -32,6 +32,7 @@ public class RotationalSpeedSensor extends DataCollector {
 	 */
 	private double rotationalSpeed;
 	private List<DataNode> nodeList;
+	private List<DataNode> androidNodeList;
 
 	/**
 	 * TODO
@@ -70,22 +71,18 @@ public class RotationalSpeedSensor extends DataCollector {
 
 		this.rotationalSpeed = dTheta / dt;     // radians per second
 
-		if (nodeList != null) {
-			double rpm = getValue();
-			double speed = rpm * VehicleAttributes.MP82.getTireDiam();  // inches per second
-			speed *= 3600.0;                                            // inches per hour
-			speed /= 63360.0;                                           // miles per hour
-			nodeList.add(new DataNode(rpm, speed));
-		}
-	}
+		double rpm = getValue();
+		double speed = rpm * VehicleAttributes.MP82.getTireDiam();  // inches per second
+		speed *= 3600.0;                                            // inches per hour
+		speed /= 63360.0;                                           // miles per hour
+		DataNode dataNode = new DataNode(rpm, speed, true);
 
-	/**
-	 * Returns the number of possible interrupts per rotation
-	 *
-	 * @return the number of possible interrupts per rotation
-	 */
-	public int getNumberOfInterruptsPerRotation() {
-		return this.numberOfInterruptsPerRotation;
+		if (nodeList != null) {
+			nodeList.add(dataNode);
+		}
+		if (androidNodeList != null) {
+			androidNodeList.add(dataNode);
+		}
 	}
 
 	/**
@@ -105,6 +102,15 @@ public class RotationalSpeedSensor extends DataCollector {
 	}
 
 	/**
+	 * Returns the number of possible interrupts per rotation
+	 *
+	 * @return the number of possible interrupts per rotation
+	 */
+	public int getNumberOfInterruptsPerRotation() {
+		return this.numberOfInterruptsPerRotation;
+	}
+
+	/**
 	 * Returns the rotational speed of this sensor in radians per second
 	 *
 	 * @return {@link #rotationalSpeed}
@@ -115,5 +121,9 @@ public class RotationalSpeedSensor extends DataCollector {
 
 	public void setNodeList(List<DataNode> list) {
 		this.nodeList = list;
+	}
+
+	public void setAndroidNodeList(List<DataNode> list) {
+		this.androidNodeList = list;
 	}
 }
