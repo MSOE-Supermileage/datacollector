@@ -7,7 +7,7 @@ import java.io.FileNotFoundException;
 import java.util.Scanner;
 
 public enum VehicleAttributes {
-	MP82(1, 2, 3), MP680(4, 5, 6), MP252(7, 8, 9);
+	MP82(1, 20.0, 3), MP680(4, 20.0, 6), MP252(7, 20.0, 9);
 
 	private double axleDiameter;
 	private double engineShaftDiameter;
