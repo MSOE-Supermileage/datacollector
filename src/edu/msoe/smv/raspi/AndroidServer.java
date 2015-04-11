@@ -136,8 +136,10 @@ public class AndroidServer implements Runnable {
 				// create a dummy buffer to store received data
 				byte[] buf = new byte[256];
 				DatagramPacket packet = new DatagramPacket(buf, buf.length);
+				System.out.println("Waiting to receive data...");
 				// NOTE This is blocking! It must receive some data to continue, so send the Pi data to get data.
 				socket.receive(packet);
+				System.out.println("Received data.");
 
 				if (nodeList.size() > 0) {
 					// get the data to send
@@ -155,9 +157,12 @@ public class AndroidServer implements Runnable {
 				}
 
 				// send the data
+				System.out.println("Getting address to send to...");
 				SocketAddress address = packet.getSocketAddress();
 				packet = new DatagramPacket(buf, buf.length, address);
+				System.out.println("Sending packet...");
 				socket.send(packet);
+				System.out.println("Packet sent.");
 
 				try {
 					Thread.sleep(50);
