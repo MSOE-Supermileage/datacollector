@@ -2,6 +2,7 @@ package edu.msoe.smv.raspi;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -17,7 +18,8 @@ public class LoggingServer implements Runnable {
 	private LoggingServer(List<DataNode> list) {
 		this.nodeList = list;
 		try {
-			this.dataLogger = new DataLogger(new File("/home/pi/data_" + new Date().toString() + ".csv"));
+			SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM-dd_hh.mm.ss");
+			this.dataLogger = new DataLogger(new File("/home/pi/daq_" + simpleDateFormat.format(new Date() + ".log")));
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("Encountered an exception when creating the data logger.");
