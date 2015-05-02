@@ -29,7 +29,15 @@ public class LoggingServer implements Runnable {
 	}
 
 	public static LoggingServer getInstance(List<DataNode> nodeList) {
-		return new LoggingServer(nodeList);
+		if (instance == null) {
+			synchronized (LoggingServer.class) {
+				if (instance == null) {
+					instance = new LoggingServer(nodeList);
+				}
+			}
+		}
+
+		return instance;
 	}
 
 	public void enableServer(boolean enable) {
