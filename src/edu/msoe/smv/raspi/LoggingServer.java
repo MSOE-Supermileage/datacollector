@@ -19,7 +19,7 @@ public class LoggingServer implements Runnable {
 		this.nodeList = list;
 		try {
 			SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM-dd_hh.mm.ss");
-			this.dataLogger = new DataLogger(new File("/home/pi/daq_" + simpleDateFormat.format(new Date() + ".log")));
+			this.dataLogger = new DataLogger(new File("/home/pi/daq_" + simpleDateFormat.format(new Date()) + ".log"));
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("Encountered an exception when creating the data logger.");
