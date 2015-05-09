@@ -72,9 +72,9 @@ public class RotationalSpeedSensor extends DataCollector {
 		this.rotationalSpeed = dTheta / dt;     // radians per second
 
 		double rpm = getValue();
-		double speed = rpm * VehicleAttributes.MP82.getTireDiam();  // inches per second
-		speed *= 3600.0;                                            // inches per hour
-		speed /= 63360.0;                                           // miles per hour
+		double speed = rpm * (VehicleAttributes.MP82.getTireDiam() / 2);    // inches per second
+		speed *= 3600.0;                                                    // inches per hour
+		speed /= 63360.0;                                                   // miles per hour
 		DataNode dataNode = new DataNode(rpm, speed, true);
 
 		if (nodeList != null) {
