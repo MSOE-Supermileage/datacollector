@@ -9,6 +9,12 @@ import com.google.gson.GsonBuilder;
  */
 public class DataNode {
 	/**
+	 * Counts the number of DataNodes created.
+	 * <p/>
+	 * This is used to track how far the vehicle has gone.
+	 */
+	private static long count = 0;
+	/**
 	 * The UNIX epoch when this DataNode was created
 	 */
 	private final long unixTime;
@@ -20,12 +26,6 @@ public class DataNode {
 	 * The speed at this DataNode
 	 */
 	private final double speed;
-	/**
-	 * Counts the number of DataNodes created.
-	 * <p/>
-	 * This is used to track how far the vehicle has gone.
-	 */
-	private static long count = 0;
 
 	/**
 	 * Constructs a new DataNode
@@ -91,8 +91,8 @@ public class DataNode {
 	/**
 	 * Returns a string representation of this DataNode as comma-separated values.
 	 * <p/>
-	 * Example result: <pre>12345678,200,20</pre> where the first value is the Unix time, the second is the RPM, and
-	 * the third is the speed.
+	 * Example result: <pre>12345678,200,20,1</pre> where the first value is the Unix time, the second is the RPM, and
+	 * the third is the speed, and the fourth is the count.
 	 *
 	 * @return a string representation of this DataNode as comma-separated values
 	 */
