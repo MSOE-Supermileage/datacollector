@@ -148,11 +148,11 @@ public class AndroidServer implements Runnable {
 						System.out.println("nodeList.size() = " + nodeList.size());
 						DataNode dn = nodeList.remove(0);
 						System.out.println("nodeList.size() = " + nodeList.size());
-						buf = dn.toString().getBytes();
+						buf = ("" + dn.getSpeed()).getBytes();
 					}
 				} else {
 					// send negative values to tell the Android device to ignore this DataNode
-					String data = new DataNode(-1, -1, false).toString();
+					String data = "" + new DataNode(-1, -1, false).getSpeed();
 					buf = data.getBytes();
 				}
 
