@@ -18,7 +18,7 @@ public class LoggingServer implements Runnable {
 	private LoggingServer(List<DataNode> list) {
 		this.nodeList = list;
 		try {
-			SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM-dd_hh.mm.ss");
+			SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM-dd_HH.mm.ss");
 			this.dataLogger = new DataLogger(new File("/home/pi/daq_" + simpleDateFormat.format(new Date()) + ".log"));
 		} catch (IOException e) {
 			e.printStackTrace();
