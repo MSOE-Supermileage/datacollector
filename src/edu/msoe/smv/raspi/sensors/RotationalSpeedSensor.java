@@ -31,6 +31,10 @@ public class RotationalSpeedSensor extends DataCollector {
 	 * The rotation speed of this sensor in radians/second
 	 */
 	private double rotationalSpeed;
+	/**
+	 * The linear speed of this sensor in miles/hour
+	 */
+	private double linearSpeed;
 	private List<DataNode> nodeList;
 	private List<DataNode> androidNodeList;
 
@@ -72,10 +76,14 @@ public class RotationalSpeedSensor extends DataCollector {
 		this.rotationalSpeed = dTheta / dt;     // radians per second
 
 		double rpm = getValue();
-		double speed = rpm * VehicleAttributes.MP82.getTireDiam();  // inches per second
-		speed *= 3600.0;                                            // inches per hour
-		speed /= 63360.0;                                           // miles per hour
-		DataNode dataNode = new DataNode(rpm, speed, true);
+		double speed = rpm * (VehicleAttributes.MP82.getTireDiam() / 2);    // inches per second
+		speed *= 3600.0;                                                    // inches per hour
+		speed /= 63360.0;                                                   // miles per hour
+
+		double circumference = 2 * Math.PI * (20.0 / 2.0) / 12.0 / 5280.0;  // miles
+		this.linearSpeed = circumference / (currentInterrupt - lastInterrupt) * 3600.0; // mph
+
+		DataNode dataNode = new DataNode(rpm, this.linearSpeed, true);
 
 		if (nodeList != null) {
 			nodeList.add(dataNode);
