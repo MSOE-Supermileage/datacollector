@@ -28,7 +28,8 @@ public enum VehicleAttributes {
 	 */
 	VehicleAttributes(File file) {
 		Gson gson = new Gson();
-		try(Scanner scan = new Scanner(file)) {
+		try {
+			Scanner scan = new Scanner(file);
 			String json = "";
 			while(scan.hasNext()) json += scan.next();
 
