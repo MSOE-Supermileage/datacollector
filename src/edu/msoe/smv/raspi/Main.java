@@ -49,6 +49,7 @@ public class Main {
 			rotationalSpeedSensor.setNodeList(nodeList);
 			rotationalSpeedSensor.setAndroidNodeList(androidNodeList);
 			System.out.println("Made rotational speed sensor");
+			androidServer.setSpeedSensor(rotationalSpeedSensor);
 
 			// start threads
 			serverThread.start();

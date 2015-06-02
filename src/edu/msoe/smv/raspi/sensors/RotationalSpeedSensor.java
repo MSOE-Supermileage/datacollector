@@ -6,8 +6,10 @@ import com.pi4j.io.gpio.PinPullResistance;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.trigger.GpioCallbackTrigger;
 import edu.msoe.smv.VehicleAttributes;
+import edu.msoe.smv.raspi.AndroidServer;
 import edu.msoe.smv.raspi.DataNode;
 
+import java.net.SocketException;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -19,6 +21,10 @@ public class RotationalSpeedSensor extends DataCollector {
 	 * The UNIX epoch time (milliseconds since 1970-01-01T00:00:00Z) of the previous interrupt
 	 */
 	private long lastInterrupt;
+	/**
+	 * TODO
+	 */
+	private long currentInterrupt;
 	/**
 	 * The number of possible interruptions per complete rotational of the sensor.
 	 * <p/>
@@ -53,6 +59,7 @@ public class RotationalSpeedSensor extends DataCollector {
 
 		final GpioPinDigitalInput rotSpeedSensor =
 				GpioFactory.getInstance().provisionDigitalInputPin(DataCollector.getRaspiPin(pinNum), PinPullResistance.PULL_UP);
+		rotSpeedSensor.setDebounce(20);
 		rotSpeedSensor.addTrigger(new GpioCallbackTrigger(pinState, new Callable<Void>() {
 			@Override
 			public Void call() throws Exception {
@@ -69,9 +76,8 @@ public class RotationalSpeedSensor extends DataCollector {
 	 */
 	private void computeRotationalSpeed() {
 		double dTheta = (2.0 * Math.PI) / numberOfInterruptsPerRotation;            // radians
-		long currentInterrupt = System.currentTimeMillis();
+		this.currentInterrupt = System.currentTimeMillis();
 		double dt = Math.abs(currentInterrupt - lastInterrupt) / 1000.0;            // seconds
-		this.lastInterrupt = currentInterrupt;
 
 		this.rotationalSpeed = dTheta / dt;     // radians per second
 
@@ -81,7 +87,7 @@ public class RotationalSpeedSensor extends DataCollector {
 		speed /= 63360.0;                                                   // miles per hour
 
 		double circumference = 2 * Math.PI * (20.0 / 2.0) / 12.0 / 5280.0;  // miles
-		this.linearSpeed = circumference / (currentInterrupt - lastInterrupt) * 3600.0; // mph
+		this.linearSpeed = circumference / dt * 3600.0; // mph
 
 		DataNode dataNode = new DataNode(rpm, this.linearSpeed, true);
 
@@ -90,7 +96,14 @@ public class RotationalSpeedSensor extends DataCollector {
 		}
 		if (androidNodeList != null) {
 			androidNodeList.add(dataNode);
+//			try {
+//				AndroidServer.getInstance(androidNodeList).setCurrentNode(dataNode);
+//			} catch (SocketException e) {
+//				System.err.println("Failed to set current DataNode for AndroidServer");
+//				System.err.println(e.getMessage());
+//			}
 		}
+		this.lastInterrupt = currentInterrupt;
 	}
 
 	/**
@@ -107,6 +120,29 @@ public class RotationalSpeedSensor extends DataCollector {
 		result /= (2.0 * Math.PI);              // revolutions per minute
 
 		return result;
+	}
+
+	/**
+	 * TODO
+	 *
+	 * @param time
+	 * @return
+	 */
+	public double getSmoothSpeed(long time) {
+		double smoothSpeed;
+		if (lastInterrupt - currentInterrupt < time - lastInterrupt) {
+			smoothSpeed = getSpeed(lastInterrupt, time);
+		} else {
+			smoothSpeed = getSpeed(lastInterrupt, currentInterrupt);
+		}
+		return smoothSpeed;
+	}
+
+	private double getSpeed(long time1, long time2) {
+		double circumference = 2.0 * Math.PI * (20.0 / 2.0) / 12.0 / 5280.0;  // miles
+		circumference /= 2;
+		double dt = Math.abs(time1 - time2) / 1000.0 / 3600.0;  // hours
+		return circumference / dt;
 	}
 
 	/**

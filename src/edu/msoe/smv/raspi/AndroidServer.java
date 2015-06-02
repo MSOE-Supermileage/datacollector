@@ -1,5 +1,7 @@
 package edu.msoe.smv.raspi;
 
+import edu.msoe.smv.raspi.sensors.RotationalSpeedSensor;
+
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -34,6 +36,14 @@ public class AndroidServer implements Runnable {
 	 */
 	private final List<DataNode> nodeList;
 	/**
+	 * TODO
+	 */
+	private DataNode currentNode = new DataNode(0, 0, false);
+	/**
+	 * TODO
+	 */
+	private DataNode lastNode = new DataNode(0, 0, false);
+	/**
 	 * The port used for sending data.
 	 */
 	private int port;
@@ -45,6 +55,7 @@ public class AndroidServer implements Runnable {
 	 * The socket to send datagrams to and receive datagrams from.
 	 */
 	private DatagramSocket socket;
+	private RotationalSpeedSensor speedSensor;
 
 	/**
 	 * Creates a server instance that will send the elements of {@code nodeList} over the specified port.
@@ -136,33 +147,39 @@ public class AndroidServer implements Runnable {
 				// create a dummy buffer to store received data
 				byte[] buf = new byte[256];
 				DatagramPacket packet = new DatagramPacket(buf, buf.length);
-				System.out.println("Waiting to receive data...");
+//				System.out.println("Waiting to receive data...");
 				// NOTE This is blocking! It must receive some data to continue, so send the Pi data to get data.
 				socket.receive(packet);
-				System.out.println("Received data.");
+//				System.out.println("Received data.");
 
+				double speed;
 				if (nodeList.size() > 0) {
 					// get the data to send
 					synchronized (nodeList) {
 						// lets stay away from IndexOutOfBoundsException, mmk?
-						System.out.println("nodeList.size() = " + nodeList.size());
-						DataNode dn = nodeList.remove(0);
-						System.out.println("nodeList.size() = " + nodeList.size());
-						buf = ("" + dn.getSpeed()).getBytes();
+//						System.out.println("nodeList.size() = " + nodeList.size());
+						DataNode dn = nodeList.remove(nodeList.size() - 1);
+						if (nodeList.size() > 0) nodeList.clear();
+//						System.out.println("nodeList.size() = " + nodeList.size());
+						speed = dn.getSpeed();
+						buf = ("" + speed).getBytes();
 					}
-				} else {
+				}/* else {
 					// send negative values to tell the Android device to ignore this DataNode
-					String data = "" + new DataNode(-1, -1, false).getSpeed();
-					buf = data.getBytes();
-				}
+//					String data = "" + new DataNode(-1, -1, false).getSpeed();
+					speed = speedSensor.getSmoothSpeed(System.currentTimeMillis());
+				}*/
+//				buf = ("" + speed).getBytes();
+
+//				buf = ("" + currentNode.getSpeed()).getBytes();
 
 				// send the data
-				System.out.println("Getting address to send to...");
+//				System.out.println("Getting address to send to...");
 				SocketAddress address = packet.getSocketAddress();
 				packet = new DatagramPacket(buf, buf.length, address);
-				System.out.println("Sending packet...");
+//				System.out.println("Sending packet...");
 				socket.send(packet);
-				System.out.println("Packet sent.");
+//				System.out.println("Packet sent.");
 
 				try {
 					Thread.sleep(50);
@@ -175,5 +192,14 @@ public class AndroidServer implements Runnable {
 				runServer = false;
 			}
 		}
+	}
+
+	public void setCurrentNode(DataNode newNode) {
+		this.lastNode = this.currentNode;
+		this.currentNode = newNode;
+	}
+
+	public void setSpeedSensor(RotationalSpeedSensor sensor) {
+		this.speedSensor = sensor;
 	}
 }
