@@ -1,0 +1,26 @@
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+
+exec 2> /home/pi/rc.local.log
+exec 1>&2
+set -x
+
+cd /home/pi
+
+# run Java-version DAQ
+# java -jar /home/pi/Raspberry_Pi.jar MP82 & >> /home/pi/lastrun.txt
+
+# run the DAQ server
+python -u /home/pi/speedserver.py >> /home/pi/lastrun.txt
+
+#exit 0
