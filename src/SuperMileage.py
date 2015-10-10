@@ -9,7 +9,7 @@ IP, PORT = ("192.168.1.2", 2004)
 
 server_socket = None
 
-speed_data = {"data": "speed", "value": 20}
+speed_data = {"data": "speed", "value": 0}
 rpm_data = {"data": "rpm", "value": 3500}
 time_data = {"data": "time", "value": int(time.time())}
 
