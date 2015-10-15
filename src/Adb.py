@@ -64,7 +64,7 @@ def android_connect():
         s.close()
 
 if __name__ == '__main__':
-    open(("LogData-%d.csv" % log_file_time), "w").write("Speed,RPM,Latency")
+    open(("LogData-%d.csv" % log_file_time), "w").write("Speed,RPM,Timestamp")
     
     dataThread = threading.Thread(target = obtain_data, args = ())
     dataThread.start()
