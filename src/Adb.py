@@ -15,7 +15,7 @@ log_file_time = int(time.time())
 
 #Whenever we get a pulse from GPIO, start a new thread and do the calculations and logging
 
-def obtain_data():
+def obtain_data(): #Have this be the callback from the GPIO pin
     _time = 0
     
     while True:
@@ -25,10 +25,18 @@ def obtain_data():
         _time += 0.1
         time_data["value"] = int(time.time())
         
-        open(("LogData-%d.csv" % log_file_time), "a").write("\n" + str(speed_data["value"]) + "," + str(rpm_data["value"]) + "," + str(time_data["value"]))
+        log_data()
         
         time.sleep(0.2)
         
+def send_data(sock):
+    sock.send((json.dumps([speed_data, rpm_data, time_data]) + "\n").encode("utf-8"))
+    
+def log_data():
+    data_str = str(speed_data["value"]) + "," + str(rpm_data["value"]) + "," + str(time_data["value"])
+    
+    open(("LogData-%d.csv" % log_file_time), "a").write("\n" + data_str)
+
 def android_connect():
     while True:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -51,9 +59,7 @@ def android_connect():
         
         while True:
             try:
-                #print("Sending message")
-                
-                s.send((json.dumps([speed_data, rpm_data, time_data]) + "\n").encode("utf-8"))
+                send_data(s)
                 
                 time.sleep(0.05)
             except Exception as e:
