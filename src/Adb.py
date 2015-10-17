@@ -16,18 +16,22 @@ log_file_time = int(time.time())
 #Whenever we get a pulse from GPIO, start a new thread and do the calculations and logging
 
 def obtain_data(): #Have this be the callback from the GPIO pin
-    _time = 0
+    previousTime = -1
     
     while True:
-        angle = int((60.0 / 2.0) * math.sin((1.0 / 2.0) * _time - (1.0 / 2.0) * math.pi) + 30.0)
-        speed_data["value"] = angle
-
-        _time += 0.1
-        time_data["value"] = int(time.time())
+        currentTime = int(round(time.time() * 1000))
         
-        log_data()
+        if previousTime is not -1:
+            timeDifference = (currentTime - previousTime)
+            
+            speed_data["value"] = timeDifference
+            time_data["value"] = timeDifference
         
-        time.sleep(0.2)
+        previousTime = currentTime
+        
+        #log_data()
+        
+        time.sleep(0.06)
         
 def send_data(sock):
     sock.send((json.dumps([speed_data, rpm_data, time_data]) + "\n").encode("utf-8"))
