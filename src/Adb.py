@@ -7,6 +7,8 @@ import math
 TCP_IP = "localhost"
 TCP_PORT = 5001
 
+data = {"time": int(time.time())};
+
 speed_data = {"data": "speed", "value": 0}
 rpm_data = {"data": "rpm", "value": 3500}
 time_data = {"data": "time", "value": int(time.time())}
@@ -24,8 +26,7 @@ def obtain_data(): #Have this be the callback from the GPIO pin
         if previousTime is not -1:
             timeDifference = (currentTime - previousTime)
             
-            speed_data["value"] = timeDifference
-            time_data["value"] = timeDifference
+            data["time"] = timeDifference
         
         previousTime = currentTime
         
@@ -34,7 +35,7 @@ def obtain_data(): #Have this be the callback from the GPIO pin
         time.sleep(0.06)
         
 def send_data(sock):
-    sock.send((json.dumps([speed_data, rpm_data, time_data]) + "\n").encode("utf-8"))
+    sock.send((json.dumps(data) + "\n").encode("utf-8"))
     
 def log_data():
     data_str = str(speed_data["value"]) + "," + str(rpm_data["value"]) + "," + str(time_data["value"])
