@@ -30,7 +30,7 @@ def obtain_data(): #Have this be the callback from the GPIO pin
         
         previousTime = currentTime
         
-        #log_data()
+        log_data()
         
         time.sleep(0.06)
         
