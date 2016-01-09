@@ -13,7 +13,7 @@ speed_data = {"data": "speed", "value": 0}
 rpm_data = {"data": "rpm", "value": 3500}
 time_data = {"data": "time", "value": int(time.time())}
 
-log_file_time = int(time.time())
+log_file_name = "/usr/local/share/daq/log-%d.csv" % int(time.time())
 
 #Whenever we get a pulse from GPIO, start a new thread and do the calculations and logging
 
@@ -40,7 +40,7 @@ def send_data(sock):
 def log_data():
     data_str = str(speed_data["value"]) + "," + str(rpm_data["value"]) + "," + str(time_data["value"])
     
-    open(("LogData-%d.csv" % log_file_time), "a").write("\n" + data_str)
+    open(log_file_name, "a").write("\n" + data_str)
 
 def android_connect():
     while True:
@@ -75,7 +75,7 @@ def android_connect():
         s.close()
 
 if __name__ == '__main__':
-    open(("/usr/local/share/daq/LogData-%d.csv" % log_file_time), "w").write("Speed,RPM,Timestamp")
+    open(log_file_name, "w").write("Speed,RPM,Timestamp")
     
     dataThread = threading.Thread(target = obtain_data, args = ())
     dataThread.start()
