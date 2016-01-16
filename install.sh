@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 
+readonly DIRNAME=$(dirname $0)
+readonly INSTALL_DIR=/usr/local/src/datacollector
+
+if [ "$(id -u)" != "0" ]; then
+  echo "Please run $0 as root" 1>&2
+  exit 1
+fi
+
 function install_dependencies {
   apt-get update
   [ `which python3` ] && apt-get install -y python3
@@ -9,12 +17,12 @@ function install_dependencies {
 }
 
 function copy_files {
-  [ ! -d /usr/local/src/datacollector ] && mkdir -p /usr/local/src/datacollector
-  ln -vfs $PWD/src/adb.py /usr/local/src/datacollector/adb.py
+  [ ! -d $INSTALL_DIR ] && mkdir -p $INSTALL_DIR
+  ln -vfs $DIRNAME/src/adb.py $INSTALL_DIR/adb.py
 }
 
 function install_service {
-  cp -vf datacollector.service /etc/systemd/system/datacollector.service
+  cp -vf $DIRNAME/datacollector.service /etc/systemd/system/datacollector.service
   systemctl daemon-reload
   systemctl enable datacollector.service
 }
