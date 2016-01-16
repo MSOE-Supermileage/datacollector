@@ -1,0 +1,11 @@
+[Unit]
+Description=Shutsdown the Pi when a button press is detected on GPIO
+Documentation=https://github.com/MSOE-Supermileage/datacollector
+DefaultDependencies=true
+
+[Service]
+Type=idle
+ExecStart=python3 /usr/local/src/datacollector/gpio-shutdown.py
+
+[Install]
+WantedBy=multi-user.target
