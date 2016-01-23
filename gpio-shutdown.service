@@ -5,7 +5,7 @@ DefaultDependencies=true
 
 [Service]
 Type=idle
-ExecStart=python3 /usr/local/src/datacollector/gpio-shutdown.py
+ExecStart=/usr/local/src/datacollector/gpio-shutdown.py
 
 [Install]
 WantedBy=multi-user.target
