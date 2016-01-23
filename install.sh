@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
-readonly DIRNAME=$(dirname $0)
+# this is the directory where this, and other source files, are located
+readonly DIRNAME=$(readlink -f $(dirname $0))
+# this is the directory to install to
 readonly INSTALL_DIR=/usr/local/src/datacollector
 
 if [ "$(id -u)" != "0" ]; then
