@@ -2,6 +2,7 @@
 
 import RPIO
 import subprocess
+import time
 
 PIN_MODE = RPIO.BCM
 SHUTDOWN_BTN_PIN = 4
@@ -25,3 +26,10 @@ def shutdown_callback(gpio_id, value):
 
 if __name__ == '__main__':
     main()
+
+    # do an efficient spin-lock here so that we can continue waiting for an
+    # interrupt
+    while True:
+        # this sleep() is an attempt to prevent the CPU from staying at 100%
+        time.sleep(10)
+
