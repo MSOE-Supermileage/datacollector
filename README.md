@@ -36,3 +36,8 @@ Once the systemd service file has been enabled (`systemctl enable
 datacollector.service`), the program should automatically startup on boot. If
 there are problems with systemd that need troubleshooting [here are some
 commands](https://wiki.archlinux.org/index.php/Systemd#Using_units) to help.
+
+## License
+
+This work is published under the Eclipse Public License 1.0, see LICENSE for
+more details.
