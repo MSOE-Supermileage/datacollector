@@ -4,6 +4,7 @@ Documentation=https://github.com/MSOE-Supermileage/datacollector
 After=network-online.target
 
 [Service]
+Environment=PYTHONOPTIMIZE=2
 Type=idle
 ExecStartPre=adb forward tcp:5001 tcp:5001
 ExecStart=/usr/bin/env python3 -u /usr/local/src/datacollector/adb.py
