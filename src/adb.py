@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
+from __future__ import print_function
 import os
 import json
-import queue
+try:
+    import queue
+except ImportError:
+    import Queue as queue
 import socket
 import threading
 import time
