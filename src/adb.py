@@ -11,6 +11,7 @@ except ImportError:
 import socket
 import threading
 import time
+import sys
 import syslog
 import serial
 import math
@@ -136,7 +137,8 @@ def adb_publish_thread():
 def log_data(values):
     log_line = ','.join(str(i) for i in values) + '\n'
     if __debug__:
-        print(log_line, end="", flush=True)
+        print(log_line, end="")
+        sys.stdout.flush()
     log_file.write(log_line)
 
 
@@ -220,3 +222,4 @@ if __name__ == '__main__':
     HALT = False
 
     main()
+
