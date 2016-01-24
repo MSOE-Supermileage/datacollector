@@ -12,11 +12,11 @@ fi
 
 function install_dependencies {
   apt-get update
-  [ `which python3` ] && apt-get install -y python3
-  [ `which pip3` ] && apt-get install -y python3-pip
-  [ `which git` ] && apt-get install -y git
-  [ `which adb` ] && apt-get install -y android-tools-adb
-  [ `which arduino` ] && apt-get install -y arduino
+  [ `which python3` ] || apt-get install -y python3
+  [ `which pip3` ] || apt-get install -y python3-pip
+  [ `which git` ] || apt-get install -y git
+  [ `which adb` ] || apt-get install -y android-tools-adb
+  [ `which arduino` ] || apt-get install -y arduino
 
   pip3 install -U -r $DIRNAME/requirements.txt
 }
