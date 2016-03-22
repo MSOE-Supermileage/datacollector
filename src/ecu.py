@@ -22,19 +22,19 @@ class EcuCollector():
         self.serial_conn.write(self.SENTINEL)
         data = self.serial_conn.read(self.RESPONSE_LENGTH)
         results = {
-            'engine_speed': __get_vehicle_speed(data),
-            'tachometer': __get_engine_speed(data),
-            'engine_temp': __get_engine_temp(data),
-            'throttle_open_rate': data[15] / 100,
-            'throttle_pos': __get_throtle_pos(data),
             'air_flow': __get_air_flow(data),
             'air_temp': __get_air_temp(data),
             'bar_pressure': __get_bar_pressure(data),
-            'voltage': data[11] / 10,
+            'engine_temp': __get_engine_temp(data),
+            'engine_speed': __get_vehicle_speed(data),
+            'idle_speed_motor_pos': data[21] / 2.5,
+            'ignition_advance': data[79] * 0.353,
             'inj_duration': __get_inj_duration(data),
             'on_time_enrichment': data[35],
-            'ignition_advance': data[79] * 0.353,
-            'idle_speed_motor_pos': data[21] / 2.5
+            'tachometer': __get_engine_speed(data),
+            'throttle_open_rate': data[15] / 100,
+            'throttle_pos': __get_throtle_pos(data),
+            'voltage': data[11] / 10
         }
         return results
 
