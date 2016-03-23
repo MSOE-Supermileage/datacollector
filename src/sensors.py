@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# coding=utf-8
 
 import serial
 
@@ -11,11 +13,17 @@ class BaseSensor:
     """
     def __init__(self, port, baudrate=9600, timeout=1):
         self.port = port
-        self.serial_conn = serial.Serial(port, baudrate, timeout)
+        self.serial_conn = serial.Serial(port, baudrate=baudrate, timeout=timeout)
 
     def get_data(self):
         """
         read data via serial, return it as a dictionary keyed off of the type of data it represents.
+        """
+        pass
+
+    def get_keys(self):
+        """
+        get the data keys for this sensor
         """
         pass
 
@@ -41,6 +49,10 @@ class HallSensor(BaseSensor):
 
         return data
 
+    # override
+    def get_keys(self):
+        return ["speed", "rpm"]
+
 
 class GenericSensor(BaseSensor):
 
@@ -58,6 +70,10 @@ class GenericSensor(BaseSensor):
             data["data"] = raw_read
 
         return data
+
+    # override
+    def get_keys(self):
+        return ["data"]
 
 
 """
