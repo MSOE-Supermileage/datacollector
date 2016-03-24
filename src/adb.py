@@ -1,9 +1,10 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 # coding=utf-8
 
 from __future__ import print_function
 import os
 import json
+
 try:
     import queue
 except ImportError:
@@ -13,53 +14,26 @@ import threading
 import time
 import sys
 import syslog
-import serial
 import math
+
+from sensor_reader import *
+from ecu import *
 
 TCP_IP = "localhost"
 TCP_PORT = 5001
 
-SPEED_SERIAL_LOC = "/dev/ttyUSB0"
-
 LOG_FILE_NAME = "/usr/local/share/daq/log-%s.csv" % time.strftime("%b%d.%H.%M")
 
-ELECTRIC_SENSORS = ["speed", "joules"]
-GAS_SENSORS = ["speed", "oxy", "temp", "rpm"]
-
-serial_sensors = dict()
-
-data_points = dict(time=queue.Queue(maxsize=0))
+# data_points = dict(time=queue.Queue(maxsize=0))
 
 data_points_live = dict(time=0.0)
 
 
 def obtain_data():
-    if serial_sensors:
-        # obtain the speed from the arduino (blocking until it writes, up to 2 seconds)
-        for sens_type, sens in serial_sensors.items():
-            raw_read = sens.readline()
-            try:
-                value = float(raw_read)
-                # set the timestamp for the sake of accuracy
-                cur_time = int(time.time() * 1000)
-                data_points_live["time"] = cur_time
-            except ValueError as e:
-                err_msg = "corrupt_serial_read: %s" % str(e)
-                syslog.syslog(syslog.LOG_ERR, err_msg)
-                if __debug__:
-                    print(err_msg)
-                value = 0.0
-            # write to the queue to be picked up and logged
-            data_points[sens_type].put_nowait(value)
-            # update the data state snapshot for the android publish thread
-            data_points_live[sens_type] = value
 
-        # push the timestamp last, the logging thread waits for timestamp first.
-        cur_time = int(time.time() * 1000)
-        data_points["time"].put_nowait(cur_time)
-    else:
-        # if we have no sensors to read, wait a second
-        time.sleep(1)
+    for sensor_reader in sensor_readers:
+        data_points_live.update(sensor_reader.read())
+        data_points_live["time"] = int(time.time() * 1000)
 
 
 def sensor_subscriber_thread():
@@ -71,15 +45,11 @@ def sensor_subscriber_thread():
 def log_data_thread():
     while not HALT:
         try:
-            values = []
-            for k, q in data_points.items():
-                # time should be first for sorting reasons
-                if k == "time":
-                    values = [q.get(timeout=.5)] + values
-                else:
-                    values.append(q.get(timeout=.5))
-            print(values)
-            log_data(values)
+            values = dict()
+            for sensor_reader in sensor_readers:
+                values += sensor_reader.pop_latest()
+            print(values.values())
+            log_data(values.values())
         except queue.Empty:
             pass
 
@@ -93,7 +63,7 @@ def adb_publish_thread():
         try:
             syslog.syslog(syslog.LOG_DEBUG, "Attempting to establish adb connection...")
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
+            # todo add timeout
             num_attempts = 0
             while not HALT:
                 try:
@@ -148,10 +118,10 @@ def log_message(message):
         print(message)
 
 
-def init_sensor(sensor_type):
-    serial_sensors[sensor_type] = serial.Serial(SPEED_SERIAL_LOC, baudrate=9600, timeout=2)
-    data_points[sensor_type] = queue.Queue(maxsize=0)
-    data_points_live[sensor_type] = 0.0
+# def init_sensor(sensor_type):
+    # serial_sensors[sensor_type] = serial.Serial(SPEED_SERIAL_LOC, baudrate=9600, timeout=2)
+    # data_points[sensor_type] = queue.Queue(maxsize=0)
+    # data_points_live[sensor_type] = 0.0
 
 
 def main():
@@ -166,21 +136,21 @@ def main():
     try:
         while 1:
             # heartbeat every second
-            for sens, dp_queue in data_points.items():
-                msg = "dp_queue_length: %s\t%d" % (sens, dp_queue.qsize())
-                log_message(msg)
+            # for sens, dp_queue in data_points.items():
+            #     msg = "dp_queue_length: %s\t%d" % (sens, dp_queue.qsize())
+            #     log_message(msg)
             for t_name, t in all_threads:
                 msg = "%s_thread_alive: %r" % (t_name, t.is_alive())
                 log_message(msg)
             # spinlock is bad - this is slightly less bad
             time.sleep(1)
-    except KeyboardInterrupt:
+    except KeyboardInterrupt:  # if we are running headless in the car, it does not shut off until car turnoff.
         syslog.syslog(syslog.LOG_INFO, "keyboard_interrupt: quitting...")
         # queue up quitting
         HALT = True
     finally:
         for t_name, t in all_threads:
-            if type(t) == threading.Thread and t.is_alive():
+            if type(t) is threading.Thread and t.is_alive():
                 t.join()
         log_file.flush()
         log_file.close()
@@ -188,6 +158,10 @@ def main():
 
 
 if __name__ == '__main__':
+
+    """
+    initialize thread pooling
+    """
 
     # managing and joining multiple async inputs is difficult and messy
     subscriber_pool = {"all": threading.Thread(target=sensor_subscriber_thread, args=())}
@@ -197,29 +171,44 @@ if __name__ == '__main__':
         "logging": threading.Thread(target=log_data_thread, args=())
     }
 
+    """
+    initialize sensors
+    """
+
     # aggregate different sensors based on environment variable describing car type
     car_type = os.environ.get("DAQ_CAR_TYPE")
 
     if car_type == "electric":
-        # TODO add electric car sensor stuff
-        sensors = ELECTRIC_SENSORS
-    elif car_type == "gas":
-        # TODO add gas car sensor stuff
-        sensors = GAS_SENSORS
-    elif car_type == "speed_only":
-        sensors = ["speed"]
-    else:
-        msg = "environment: DAQ_CAR_TYPE not set. try 'gas' or 'electric'."
-        syslog.syslog(syslog.LOG_ERR, msg)
-        raise RuntimeError(msg)
+        hall_queue = queue.Queue(maxsize=0)
 
-    for sensor in sensors:
-        init_sensor(sensor)
+        sensor_readers = [SensorReader("hall", HallSensor('/dev/ttyUBS0', timeout=2), hall_queue)]
+    elif car_type == "gas":
+        hall_queue = queue.Queue(maxsize=0)
+        ecu_queue = queue.Queue(maxsize=0)
+
+        sensor_readers = [
+            SensorReader("hall", HallSensor('/dev/ttyUSB0', timeout=2), hall_queue),
+            SensorReader("ecu", HallSensor('/dev/ttyUSB1', timeout=.5), ecu_queue)
+        ]
+    else:
+        # msg = "environment: DAQ_CAR_TYPE not set. try 'gas' or 'electric'."
+        # syslog.syslog(syslog.LOG_ERR, msg)
+        # raise RuntimeError(msg)
+        hall_queue = queue.Queue(maxsize=0)
+
+        sensor_readers = [SensorReader("hall", HallSensor('/dev/ttyUBS0', timeout=2), hall_queue)]
+
+    """
+    initialize log file csv header
+    """
 
     log_file = open(LOG_FILE_NAME, mode='a')
-    log_file.write("time," + ','.join(sensors) + "\n")
+    keys = []
+    for sr in sensor_readers:
+        keys += sr.get_keys()
+
+    log_file.write("time," + ','.join(keys) + "\n")
 
     HALT = False
 
     main()
-
