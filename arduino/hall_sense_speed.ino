@@ -12,6 +12,8 @@
  double curtime;
  double ms;
  double minutes;
+ double time_dif;
+ String data;
  
   void setup()
  {
@@ -24,7 +26,9 @@
  
  void loop()//Measure RPM
  {
-   if (revs >= 2) {
+   time_dif = millis() - curtime;
+   
+   if (time_dif>100) {
      curtime = millis();
      ms = curtime - timeold;
      minutes = ms/1000/60;
@@ -32,10 +36,11 @@
      timeold = millis();
      ipm = rpm*2.0*pi*r; //inches per minute
      car_speed = ((ipm*60)/12)/5280;
-
-     Serial.printf("%d,%d", rpm, car_speed);
-     
+     data = String(rpm);
+     data.concat(",");
+     data.concat(String(car_speed));
      revs = 0;
+     Serial.println(data);
    }
   }
   
