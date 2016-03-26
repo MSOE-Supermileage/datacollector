@@ -16,17 +16,17 @@ class ECUSensor(BaseSensor):
         """
         self.serial_conn.write(self.SENTINEL)
         data = self.serial_conn.read(self.RESPONSE_LENGTH)
+        results = dict()
+        if not data:
+            for dp in self.get_keys(self):
+                results[dp] = 0.0
         results = {
-            'air_flow': self.get_air_flow(data),
             'air_temp': self.get_air_temp(data),
-            'bar_pressure': self.get_bar_pressure(data),
             'engine_temp': self.get_engine_temp(data),
             'vehicle_speed': self.get_vehicle_speed(data),
             'idle_speed_motor_pos': self.get_idle_speed_motor_pos(data),
-            'ignition_advance': self.get_ignition_advance(data),
             'inj_duration': self.get_inj_duration(data),
-            'on_time_enrichment': self.get_on_time_enrichment(data),
-            'tachometer': self.get_engine_speed(data),
+            'engine_speed': self.get_engine_speed(data),
             'throttle_open_rate': self.get_throttle_open_rate(data),
             'throttle_pos': self.get_throttle_pos(data),
             'voltage': self.get_voltage(data),
@@ -36,16 +36,12 @@ class ECUSensor(BaseSensor):
 
     def get_keys(self):
         return [
-            'air_flow',
             'air_temp',
-            'bar_pressure',
             'engine_temp',
             'vehicle_speed',
             'idle_speed_motor_pos',
-            'ignition_advance',
             'inj_duration',
-            'on_time_enrichment',
-            'tachometer',
+            'engine_speed',
             'throttle_open_rate',
             'throttle_pos',
             'voltage',

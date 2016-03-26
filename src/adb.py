@@ -30,10 +30,13 @@ data_points_live = dict(time=0.0)
 
 
 def obtain_data():
-
     for sensor_reader in sensor_readers:
-        data_points_live.update(sensor_reader.read())
-        data_points_live["time"] = int(time.time() * 1000)
+        vals = sensor_reader.read()
+        if 'errors' in vals:
+            syslog.syslog(syslog.LOG_ERR, vals["errors"])
+            del vals["errors"]
+        data_points_live.update()
+    data_points_live["time"] = int(time.time() * 1000)
 
 
 def sensor_subscriber_thread():
@@ -45,11 +48,11 @@ def sensor_subscriber_thread():
 def log_data_thread():
     while not HALT:
         try:
-            values = dict()
+            values = []
             for sensor_reader in sensor_readers:
-                values += sensor_reader.pop_latest()
-            print(values.values())
-            log_data(values.values())
+                values += sensor_reader.pop_latest().values()
+            print(values)
+            log_data(values)
         except queue.Empty:
             pass
 
@@ -181,14 +184,14 @@ if __name__ == '__main__':
     if car_type == "electric":
         hall_queue = queue.Queue(maxsize=0)
 
-        sensor_readers = [SensorReader("hall", HallSensor('/dev/ttyUBS0', timeout=2), hall_queue)]
+        sensor_readers = [SensorReader("hall", HallSensor('/dev/ttyUSB1', timeout=3), hall_queue)]
     elif car_type == "gas":
         hall_queue = queue.Queue(maxsize=0)
         ecu_queue = queue.Queue(maxsize=0)
 
         sensor_readers = [
-            SensorReader("hall", HallSensor('/dev/ttyUSB0', timeout=2), hall_queue),
-            SensorReader("ecu", HallSensor('/dev/ttyUSB1', timeout=.5), ecu_queue)
+            SensorReader("hall", HallSensor('/dev/ttyUSB1', timeout=3), hall_queue),
+            SensorReader("ecu", ECUSensor('/dev/ttyUSB0', timeout=.5), ecu_queue)
         ]
     else:
         # msg = "environment: DAQ_CAR_TYPE not set. try 'gas' or 'electric'."
@@ -196,7 +199,7 @@ if __name__ == '__main__':
         # raise RuntimeError(msg)
         hall_queue = queue.Queue(maxsize=0)
 
-        sensor_readers = [SensorReader("hall", HallSensor('/dev/ttyUBS0', timeout=2), hall_queue)]
+        sensor_readers = [SensorReader("hall", HallSensor('/dev/ttyUBS1', timeout=3), hall_queue)]
 
     """
     initialize log file csv header
@@ -207,7 +210,7 @@ if __name__ == '__main__':
     for sr in sensor_readers:
         keys += sr.get_keys()
 
-    log_file.write("time," + ','.join(keys) + "\n")
+    log_file.write(','.join(keys) + "\n")
 
     HALT = False
 

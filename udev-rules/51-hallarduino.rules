@@ -1,0 +1,9 @@
+# author: austin hartline
+# custom udev rule for gas car ECU
+
+# FCR-5 ECU, Control Systems, Inc.
+# http://controlsystemsinc.us/index.html
+# Uses standard USB controller:
+# 	ID 0403:6001 Future Technology Devices International, Ltd FT232 USB-Serial (UART) IC
+# So we need to identify the device by serial number
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="A2003EjP", SYMLINK+="ecu"

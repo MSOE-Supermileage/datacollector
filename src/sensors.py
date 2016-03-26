@@ -2,7 +2,7 @@
 # coding=utf-8
 
 import serial
-
+import time
 
 class BaseSensor:
 
@@ -32,26 +32,29 @@ class HallSensor(BaseSensor):
 
     # override
     def get_data(self):
-        data = {"rpm": 0.0, "speed": 0.0, "errors": ""}
+        data = {"time": 0, "rpm": 0.0, "speed": 0.0}
         raw_read = self.serial_conn.readline().split(b',')
+        data["hall_time"] = int(time.time() * 1000)
         if len(raw_read) == 2:
             try:
                 data["rpm"] = float(raw_read[0])
             except ValueError as e:
                 # this is a warning
+                if not data["errors"]:
+                    data["errors"] = ""
                 data["errors"] += "corrupt_serial_read: %s\n" % str(e)
             try:
                 data["speed"] = float(raw_read[1])
             except ValueError as e:
+                if not data["errors"]:
+                    data["errors"] = ""
                 data["errors"] += "corrupt_serial_read: %s\n" % str(e)
-        else:
-            data["errors"] += "corrupt_serial_read: %s\n" % str(raw_read)
 
         return data
 
     # override
     def get_keys(self):
-        return ["speed", "rpm"]
+        return ["time", "speed", "rpm"]
 
 
 class GenericSensor(BaseSensor):
