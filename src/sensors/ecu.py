@@ -2,13 +2,16 @@
 # coding=utf-8
 
 from __future__ import division
-from sensors import *
+from sensor import BaseSensor
 import time
 
 
 class ECUSensor(BaseSensor):
     SENTINEL = b'X'
     RESPONSE_LENGTH = 91
+
+    def __init__(self, port='/dev/ecu', baudrate=9600, timeout=0.5):
+        BaseSensor.__init__(self, port, baudrate, timeout)
 
     def get_data(self):
         """
@@ -18,14 +21,16 @@ class ECUSensor(BaseSensor):
         data = self.serial_conn.read(self.RESPONSE_LENGTH)
         results = dict()
         if not data:
-            for dp in self.get_keys(self):
+            for dp in self.get_keys():
                 results[dp] = 0.0
         results = {
+            'ecu_time': int(time.time() * 1000),
             'air_temp': self.get_air_temp(data),
             'engine_temp': self.get_engine_temp(data),
             'vehicle_speed': self.get_vehicle_speed(data),
             'idle_speed_motor_pos': self.get_idle_speed_motor_pos(data),
             'inj_duration': self.get_inj_duration(data),
+            'engine_rpm': self.get_engine_speed(data),
             'engine_speed': self.get_engine_speed(data),
             'throttle_open_rate': self.get_throttle_open_rate(data),
             'throttle_pos': self.get_throttle_pos(data),
@@ -36,11 +41,13 @@ class ECUSensor(BaseSensor):
 
     def get_keys(self):
         return [
+            'ecu_time',
             'air_temp',
             'engine_temp',
             'vehicle_speed',
             'idle_speed_motor_pos',
             'inj_duration',
+            'engine_rpm',
             'engine_speed',
             'throttle_open_rate',
             'throttle_pos',
@@ -65,9 +72,17 @@ class ECUSensor(BaseSensor):
         return ord(data[13]) + ord(data[82]) / 10
 
     @staticmethod
-    def get_engine_speed(data):
+    def get_engine_rpm(data):
         """ Returns the engine speed in RPM """
         return ord(data[4]) * 50 + ord(data[5])
+
+    @staticmethod
+    def get_engine_speed(data):
+        """ Returns the engine speed in MPH """
+        gear_ratio = 5.54
+        wheel_circumference_miles = 0.00099
+        minutes_per_hour = 60
+        return ord(data[4]) * 50 + ord(data[5]) / gear_ratio * wheel_circumference_miles * minutes_per_hour
 
     @staticmethod
     def get_engine_temp(data):
@@ -113,7 +128,7 @@ class ECUSensor(BaseSensor):
     @staticmethod
     def get_voltage(data):
         """ Returns the battery voltage in Volts """
-        return ord(data[11]) / 10  # note data sheet conflicts - might be data[10] depending on implementation
+        return ord(data[10]) / 10  # note data sheet conflicts, says it's data[11]
 
     @staticmethod
     def get_fuel(data):
@@ -122,12 +137,16 @@ class ECUSensor(BaseSensor):
 
 
 """
-integration test client for FCR-5G ECU
+integration test client for FCR-5 ECU
 quit with CTRL-C (^C)
-run on the raspberry pi or any device with the FCR-5G ECU attached via the VGA-like cable connector to USB
+run on the raspberry pi or any device with the FCR-5 ECU attached via the DB-9 to USB connector
 """
 if __name__ == "__main__":
-    e = ECUSensor('/dev/ttyUSB0', 9600)
+    import sys
+
+    dev = sys.argv[1] if len(sys.argv) > 1 else '/dev/ecu'
+
+    e = ECUSensor(dev, baudrate=9600)
     try:
         print(','.join(e.get_data().keys()))
         while 1:

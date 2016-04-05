@@ -1,2 +1,2 @@
 #!/usr/bin/env bash
-rm -rf /usr/local/share/daq/log*
+rm -r /usr/local/share/daq/log*

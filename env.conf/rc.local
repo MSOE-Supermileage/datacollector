@@ -17,13 +17,13 @@ set -x
 
 #/usr/bin/printf "         My IP address is\033[0;31m `/sbin/ifconfig | grep "inet addr" | grep -v "127.0.0.1" | awk '{ print $2 }' | awk -F: '{ print $2 }'` \033[0m\n" > /dev/console
 
-HOME=/root
+export HOME=/root
 
 adb devices
 
-python /root/ecu.py
+export PYTHONOPTIMIZE=2
+export DAQ_CAR_TYPE=gas
 
-#cd /usr/local/src/datacollector
-#python -u /usr/local/src/datacollector/adb.py >> /usr/local/share/daq/lastrun.txt
+python /usr/local/src/datacollector/datacollector.py
 
 exit 0

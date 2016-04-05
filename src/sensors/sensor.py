@@ -4,6 +4,7 @@
 import serial
 import time
 
+
 class BaseSensor:
 
     """
@@ -28,35 +29,6 @@ class BaseSensor:
         pass
 
 
-class HallSensor(BaseSensor):
-
-    # override
-    def get_data(self):
-        data = {"time": 0, "rpm": 0.0, "speed": 0.0}
-        raw_read = self.serial_conn.readline().split(b',')
-        data["hall_time"] = int(time.time() * 1000)
-        if len(raw_read) == 2:
-            try:
-                data["rpm"] = float(raw_read[0])
-            except ValueError as e:
-                # this is a warning
-                if not data["errors"]:
-                    data["errors"] = ""
-                data["errors"] += "corrupt_serial_read: %s\n" % str(e)
-            try:
-                data["speed"] = float(raw_read[1])
-            except ValueError as e:
-                if not data["errors"]:
-                    data["errors"] = ""
-                data["errors"] += "corrupt_serial_read: %s\n" % str(e)
-
-        return data
-
-    # override
-    def get_keys(self):
-        return ["time", "speed", "rpm"]
-
-
 class GenericSensor(BaseSensor):
 
     # override
@@ -64,33 +36,33 @@ class GenericSensor(BaseSensor):
         data = {"data": 0.0, "errors": ""}
         # assume line delimited numbers
         raw_read = self.serial_conn.readline()
+        data["time"] = int(time.time() * 1000)
         try:
             data["data"] = float(raw_read)
             if data["data"].is_integer():
                 data["data"] = int(data["data"])
         except ValueError:
-            data["errors"] += "corrupt_serial_read: %s\n" % str(raw_read)
+            data["errors"] = "corrupt_serial_read: %s\n" % str(raw_read)
             data["data"] = raw_read
 
         return data
 
     # override
     def get_keys(self):
-        return ["data"]
+        return ["time", "data"]
 
 
 """
-integration test client for hall effect sensor
+integration test client for generic sensor
 quit with CTRL-C (^C)
-run on the raspberry pi or any device with the wheel hall-effect sensing arduino connected on the
-top USB port.
+run on the raspberry pi or any device with your sensor connected
 """
 if __name__ == "__main__":
-    h = HallSensor("/dev/ttyUSB0")
+    s = GenericSensor("/dev/ttyUSB0")
     try:
+        print(','.join(s.get_data().keys()))
         while 1:
-            print(h.get_data())
+            print(','.join(s.get_data().values()))
+            time.sleep(0.25)
     except KeyboardInterrupt as keyboard_interrupt:
-        print("exiting...")
-
-
+        print("stopping...")

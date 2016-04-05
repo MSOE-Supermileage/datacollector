@@ -7,8 +7,8 @@ After=network-online.target
 Environment=PYTHONOPTIMIZE=2
 Type=idle
 ExecStartPre=/usr/bin/env adb forward tcp:5001 tcp:5001
-ExecStart=/usr/bin/env pypy /usr/local/src/datacollector/adb.py
-ExecReload=/usr/bin/env pypy /usr/local/src/datacollector/adb.py
+ExecStart=/usr/bin/env pypy /usr/local/src/datacollector/datacollector.py
+ExecReload=/usr/bin/env pypy /usr/local/src/datacollector/datacollector.py
 Restart=on-failure
 
 [Install]

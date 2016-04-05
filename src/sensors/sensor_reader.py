@@ -1,15 +1,15 @@
-from sensors import *
 try:
     import queue
 except ImportError:
     import Queue as queue
+import syslog
 
 
 class SensorReader:
-    def __init__(self, sensor_type, sensor, sensor_queue):
+    def __init__(self, sensor_type, sensor):
         self.sensor_type = sensor_type
         self.sensor = sensor
-        self.sensor_queue = sensor_queue
+        self.sensor_queue = queue.Queue(maxsize=0)
         self.latest_value = 0.0
 
     def read(self):
@@ -20,6 +20,11 @@ class SensorReader:
         """
         self.latest_value = self.sensor.get_data()
         self.sensor_queue.put_nowait(self.latest_value)
+        if self.sensor_queue.qsize() > 10:
+            syslog.syslog(syslog.LOG_ALERT, "warning: %s queue size %d", self.sensor_type, self.sensor_queue.qsize())
+            if __debug__:
+                print("warning: %s queue size %d", self.sensor_type, self.sensor_queue.qsize())
+
         return self.latest_value
 
     def peek_latest(self):
