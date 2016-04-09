@@ -1,9 +1,6 @@
 # author: austin hartline
-# custom udev rule for gas car ECU
+# custom udev rule for hall-effect sensing arduino
+# used for sensing wheel rotation derives wheel speed, rpm derives vehicle speed
 
-# FCR-5 ECU, Control Systems, Inc.
-# http://controlsystemsinc.us/index.html
-# Uses standard USB controller:
-# 	ID 0403:6001 Future Technology Devices International, Ltd FT232 USB-Serial (UART) IC
-# So we need to identify the device by serial number
-SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="A2003EjP", SYMLINK+="ecu"
+# Wyatt's Arduino Uno, doesn't use standard USB controller
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", SYMLINK+="hallarduino"
