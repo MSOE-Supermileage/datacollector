@@ -19,6 +19,7 @@ from sensors.sensor_reader import SensorReader
 from sensors.hallsensor import HallSensor
 from sensors.ecu import ECUSensor
 from sensors.mock_sensor import MockSensor
+from sensors.joule_sensor import JouleSensor
 
 # region variables
 
@@ -218,6 +219,7 @@ if __name__ == '__main__':
 
     if car_type == "electric":
         sensor_readers = [SensorReader("hall", HallSensor())]
+		sensor_readers = [SensorReader("joule", JouleSensor())]
     elif car_type == "gas":
         sensor_readers = [
             SensorReader("hall", HallSensor()),
