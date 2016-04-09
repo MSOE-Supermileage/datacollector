@@ -1,0 +1,7 @@
+# author: sean khodl
+# custom udev rule for joule meter
+
+# joule meter
+# Uses standard USB controller:
+# So we need to identify the device by serial number
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="A2003EjP", SYMLINK+="joulearduino"
