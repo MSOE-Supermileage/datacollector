@@ -3,6 +3,7 @@
 
 from __future__ import division
 from sensor import BaseSensor
+import serial
 import time
 
 
@@ -12,31 +13,51 @@ class ECUSensor(BaseSensor):
 
     def __init__(self, port='/dev/ecu', baudrate=9600, timeout=0.5):
         BaseSensor.__init__(self, port, baudrate, timeout)
+        # used for tracking time since last data query, as well as reducing latency
+        # of querying too often if the ECU is disconnected.
+        # surprise the ECU turns off all the time.
+        self.last_query_time = 0.0
 
     def get_data(self):
         """
         Reads data from the ECU and returns it in a dictionary.
         """
-        self.serial_conn.write(self.SENTINEL)
-        data = self.serial_conn.read(self.RESPONSE_LENGTH)
         results = dict()
-        if not data:
+
+        current_time = int(time.time() * 1000)
+        # HACK because ecu gets killed after each burn
+        # assume all 0s
+        if not self.serial_conn or not self.serial_conn.isOpen():
+            if current_time - self.timeout > self.last_query_time:
+                print(self.reconnect())
+
+        if self.serial_conn and self.serial_conn.isOpen():
+            try:
+                self.serial_conn.write(self.SENTINEL)
+                data = self.serial_conn.read(self.RESPONSE_LENGTH)
+            except serial.SerialException:
+                data = None
+                self.serial_conn.close()
+            if not data:
+                for dp in self.get_keys():
+                    results[dp] = 0.0
+            else:
+                self.last_query_time = int(time.time() * 1000)
+                results = {
+                    'ecu_time': self.last_query_time,
+                    'air_temp': self.get_air_temp(data),
+                    'engine_temp': self.get_engine_temp(data),
+                    'vehicle_speed': self.get_vehicle_speed(data),
+                    'inj_duration': self.get_inj_duration(data),
+                    'engine_rpm': self.get_engine_speed(data),
+                    'engine_speed': self.get_engine_speed(data),
+                    'throttle_pos': self.get_throttle_pos(data),
+                    'voltage': self.get_voltage(data),
+                    'fuel': self.get_fuel(data)
+                }
+        else:
             for dp in self.get_keys():
                 results[dp] = 0.0
-        results = {
-            'ecu_time': int(time.time() * 1000),
-            'air_temp': self.get_air_temp(data),
-            'engine_temp': self.get_engine_temp(data),
-            'vehicle_speed': self.get_vehicle_speed(data),
-            'idle_speed_motor_pos': self.get_idle_speed_motor_pos(data),
-            'inj_duration': self.get_inj_duration(data),
-            'engine_rpm': self.get_engine_speed(data),
-            'engine_speed': self.get_engine_speed(data),
-            'throttle_open_rate': self.get_throttle_open_rate(data),
-            'throttle_pos': self.get_throttle_pos(data),
-            'voltage': self.get_voltage(data),
-            'fuel': self.get_fuel(data)
-        }
         return results
 
     def get_keys(self):
@@ -45,11 +66,9 @@ class ECUSensor(BaseSensor):
             'air_temp',
             'engine_temp',
             'vehicle_speed',
-            'idle_speed_motor_pos',
             'inj_duration',
             'engine_rpm',
             'engine_speed',
-            'throttle_open_rate',
             'throttle_pos',
             'voltage',
             'fuel'
@@ -148,9 +167,9 @@ if __name__ == "__main__":
 
     e = ECUSensor(dev, baudrate=9600)
     try:
-        print(','.join(e.get_data().keys()))
+        print(','.join(str(i) for i in e.get_data().keys()))
         while 1:
-            print(','.join(e.get_data().values()))
+            print(','.join(str(i) for i in e.get_data().values()))
             time.sleep(0.25)
 
     except KeyboardInterrupt as keyboard_interrupt:

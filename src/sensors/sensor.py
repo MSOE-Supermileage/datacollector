@@ -14,7 +14,23 @@ class BaseSensor:
     """
     def __init__(self, port, baudrate=9600, timeout=1):
         self.port = port
-        self.serial_conn = serial.Serial(port, baudrate=baudrate, timeout=timeout)
+        self.baudrate = baudrate
+        self.timeout = timeout
+        try:
+            self.serial_conn = serial.Serial(self.port, baudrate=self.baudrate, timeout=self.timeout)
+        except serial.SerialException:
+            self.serial_conn = None
+
+    def reconnect(self):
+        """
+        attempt to reconnect
+        """
+        try:
+            self.serial_conn = serial.Serial(self.port, baudrate=self.baudrate, timeout=self.timeout)
+        except serial.SerialException as e:
+            print(e)
+            self.serial_conn = None
+        return True if self.serial_conn else False
 
     def get_data(self):
         """

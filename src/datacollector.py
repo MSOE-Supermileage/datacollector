@@ -82,14 +82,15 @@ def log_data_thread():
                 print("null read")
                 for key in sensor_reader.get_keys():
                     data[key] = 0.0
-        print(data)
+        if __debug__:
+            print(data)
         # sort
         ordered_values = []
         for header in csv_headers:
             ordered_values.append(data[header])
         # log
-        #if __debug__:
-        print(ordered_values)
+        if __debug__:
+            print(ordered_values)
         log_data(ordered_values)
 
 
@@ -214,13 +215,12 @@ if __name__ == '__main__':
 
     # aggregate different sensors based on environment variable describing car type
     car_type = os.environ.get("DAQ_CAR_TYPE")
-    # car_type = "development"
 
     if car_type == "electric":
         sensor_readers = [SensorReader("hall", HallSensor())]
     elif car_type == "gas":
         sensor_readers = [
-            #SensorReader("hall", HallSensor()),
+            SensorReader("hall", HallSensor()),
             SensorReader("ecu", ECUSensor())
         ]
     elif car_type == "development":
