@@ -219,7 +219,7 @@ if __name__ == '__main__':
 
     if car_type == "electric":
         sensor_readers = [SensorReader("hall", HallSensor())]
-		sensor_readers = [SensorReader("joule", JouleSensor())]
+        sensor_readers = [SensorReader("joule", JouleSensor())]
     elif car_type == "gas":
         sensor_readers = [
             SensorReader("hall", HallSensor()),
