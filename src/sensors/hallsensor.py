@@ -13,10 +13,8 @@ class HallSensor(BaseSensor):
     # override
     def get_data(self):
         data = {"hall_time": 0, "rpm": 0.0, "speed": 0.0}
-        #raw_read = self.serial_conn.readline().split(b',')
         raw_buffered_read = self.serial_conn.readline()
         while self.serial_conn.inWaiting() > 22:
-            #print('inWaiting:', self.serial_conn.inWaiting())
             raw_buffered_read = self.serial_conn.readline()
         raw_read = raw_buffered_read.split(b',') # grab the last line
         print('raw_read:', raw_read)

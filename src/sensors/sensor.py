@@ -12,7 +12,7 @@ class BaseSensor:
 
     will throw exceptions if nothing is connected to that port / device.
     """
-    def __init__(self, port, baudrate=9600, timeout=1):
+    def __init__(self, port, baudrate=9600, timeout=.1):
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
@@ -28,7 +28,7 @@ class BaseSensor:
         try:
             self.serial_conn = serial.Serial(self.port, baudrate=self.baudrate, timeout=self.timeout)
         except serial.SerialException as e:
-            print(e)
+            # print(e)
             self.serial_conn = None
         return True if self.serial_conn else False
 

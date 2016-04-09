@@ -26,7 +26,7 @@ from sensors.mock_sensor import MockSensor
 TCP_IP = "localhost"
 TCP_PORT = 5001
 
-LOG_FILE_NAME = "/usr/local/share/daq/log-%s.csv" % time.strftime("%b%d.%H.%M")
+LOG_FILE_NAME = "/daq_data/log-%s.csv" % time.strftime("%b%d.%H.%M")
 # LOG_FILE_NAME = "test.log"
 
 # image of latest data query cycle result
@@ -232,7 +232,7 @@ if __name__ == '__main__':
         sensor_readers = [SensorReader("hall", HallSensor())]
 
     # initialize log file csv header
-    log_file = open(LOG_FILE_NAME, mode='a')
+    log_file = open(LOG_FILE_NAME, 'a', 0)
     csv_headers = []
     for sr in sensor_readers:
         csv_headers += sr.get_keys()

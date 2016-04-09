@@ -38,7 +38,7 @@ class ECUSensor(BaseSensor):
             except serial.SerialException:
                 data = None
                 self.serial_conn.close()
-            if not data:
+            if not data or len(data.strip()) < 90:
                 for dp in self.get_keys():
                     results[dp] = 0.0
             else:
