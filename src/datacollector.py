@@ -10,10 +10,10 @@ import json
 import socket
 import threading
 import syslog
-import math
 import time
 import sys
 import os
+from pyadb import ADB
 
 from sensors.sensor_reader import SensorReader
 from sensors.hallsensor import HallSensor
@@ -22,6 +22,10 @@ from sensors.mock_sensor import MockSensor
 from sensors.joule_sensor import JouleSensor
 
 # region variables
+
+adb = ADB()
+# adb.set_adb_path('/opt/android-sdk-linux/platform-tools/adb')
+adb.set_adb_path('/opt/android-sdk-linux/platform-tools/adb')  # todo find this location on the pi
 
 # android connection stuff
 TCP_IP = "localhost"
@@ -47,9 +51,7 @@ def obtain_data():
     for sensor_reader in sensor_readers:
         vals = sensor_reader.read()
         if 'errors' in vals:
-            syslog.syslog(syslog.LOG_ERR, vals["errors"])
-            if __debug__:
-                print(vals["errors"])
+            log_error(vals["errors"])
             del vals["errors"]
         data_points_live.update(vals)
     # aggregate timestamp
@@ -83,15 +85,12 @@ def log_data_thread():
                 print("null read")
                 for key in sensor_reader.get_keys():
                     data[key] = 0.0
-        if __debug__:
-            print(data)
+        # print(data)  # DEBUG
         # sort
         ordered_values = []
         for header in csv_headers:
             ordered_values.append(data[header])
         # log
-        if __debug__:
-            print(ordered_values)
         log_data(ordered_values)
 
 
@@ -103,45 +102,25 @@ def adb_publish_thread():
     sends as fast as possible.
     """
     while not HALT:
+        adb.wait_for_device() # block until a device comes along
+        err, dev = adb.get_devices()
+        if len(dev) == 0:
+            # avoid the race condition where we get the device but can't list it or it is offline or something stupid
+            continue
+
+        # lol don't connect multiple phones m8
+        adb.set_target_device(dev[0])
+        adb.forward_socket('tcp:' + str(TCP_PORT), 'tcp:' + str(TCP_PORT))
+
         try:
-            syslog.syslog(syslog.LOG_DEBUG, "Attempting to establish adb connection...")
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            num_attempts = 0
+            s.connect((TCP_IP, TCP_PORT))
             while not HALT:
-                try:
-                    if __debug__:
-                        print("Trying to connect...")
-
-                    s.connect((TCP_IP, TCP_PORT))
-                    syslog.syslog(syslog.LOG_INFO, "adb connected.")
-
-                    if __debug__:
-                        print("Connected")
-                    break
-                except Exception as e:
-                    syslog.syslog(syslog.LOG_ERR, str(e))
-
-                    if __debug__:
-                        print(e)
-
-                    num_attempts += 1
-                    # wait increases logarithmically, up to 5 seconds
-                    wait_time = .5 * int(math.log(num_attempts, 10))
-                    time.sleep(wait_time if wait_time < 5.0 else 5.0)
-                    continue
-
-            while not HALT:
-                try:
-                    s.send((json.dumps(data_points_live) + "\n").encode("utf-8"))
-                    time.sleep(0.01)
-                except Exception as e:
-                    syslog.syslog(syslog.LOG_ERR, str(e))
-                    if __debug__:
-                        print(e)
-                        print("Reconnecting")
-                    break
-        except Exception as sock_create_err:
-            syslog.syslog(syslog.LOG_ERR, str(sock_create_err))
+                s.send((json.dumps(data_points_live) + "\n").encode("utf-8"))
+                time.sleep(.1)
+        except Exception as e:
+            log_error(str(e))
+            time.sleep(1)
         finally:
             s.close()
 
@@ -151,6 +130,7 @@ def adb_publish_thread():
 # region helpers
 
 def log_data(values):
+    """ Log real sensor data to our log file """
     log_line = ','.join(str(i) for i in values) + '\n'
     if __debug__:
         print(log_line, end="")
@@ -159,9 +139,18 @@ def log_data(values):
 
 
 def log_message(message):
+    """ Log an informational message to the syslog and stdout if debug mode is on """
     syslog.syslog(syslog.LOG_INFO, message)
     if __debug__:
         print(message)
+
+
+def log_error(message):
+    """ Log an error to the syslog and stderr if debug mode is on """
+    syslog.syslog(syslog.LOG_ERR, message)
+    if __debug__:
+        print(message, file=sys.stderr)
+
 
 # endregion helpers
 

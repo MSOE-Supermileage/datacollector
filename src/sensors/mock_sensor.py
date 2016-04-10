@@ -9,6 +9,7 @@ import random
 class MockSensor(BaseSensor):
 
     # noinspection PyMissingConstructor
+    # noinspection PyUnusedLocal
     def __init__(self, port=None, baudrate=9600, timeout=1):
         # don't call because this creates a serial reader at the port
         # BaseSensor.__init__(self, port, baudrate, timeout)

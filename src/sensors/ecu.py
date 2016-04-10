@@ -29,7 +29,7 @@ class ECUSensor(BaseSensor):
         # assume all 0s
         if not self.serial_conn or not self.serial_conn.isOpen():
             if current_time - self.timeout > self.last_query_time:
-                print(self.reconnect())
+                self.reconnect()
 
         if self.serial_conn and self.serial_conn.isOpen():
             try:
@@ -60,6 +60,7 @@ class ECUSensor(BaseSensor):
                 results[dp] = 0.0
         return results
 
+    @staticmethod
     def get_keys(self):
         return [
             'ecu_time',
