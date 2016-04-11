@@ -34,7 +34,7 @@ class SensorReader:
         """
         return self.latest_value
 
-    def pop_latest(self, timeout=.5):
+    def pop_latest(self, timeout=1.0):
         """
         pulls the latest data node off the queue, up to the specified timeout. useful for logging / processing
         of data nodes.

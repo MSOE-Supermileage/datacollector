@@ -82,7 +82,7 @@ def log_data_thread():
             try:
                 data.update(sensor_reader.pop_latest())
             except queue.Empty:
-                print("null read")
+                log_error("no data to log")
                 for key in sensor_reader.get_keys():
                     data[key] = 0.0
         # print(data)  # DEBUG
@@ -102,7 +102,7 @@ def adb_publish_thread():
     sends as fast as possible.
     """
     while not HALT:
-        adb.wait_for_device() # block until a device comes along
+        adb.wait_for_device()  # block until a device comes along
         err, dev = adb.get_devices()
         if len(dev) == 0:
             # avoid the race condition where we get the device but can't list it or it is offline or something stupid
