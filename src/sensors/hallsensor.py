@@ -16,7 +16,7 @@ class HallSensor(BaseSensor):
         raw_buffered_read = self.serial_conn.readline()
         while self.serial_conn.inWaiting() > 22:
             raw_buffered_read = self.serial_conn.readline()
-        raw_read = raw_buffered_read.split(b',') # grab the last line
+        raw_read = raw_buffered_read.split(b',')  # grab the last line
         print('raw_read:', raw_read)
         data["hall_time"] = int(time.time() * 1000)
         if len(raw_read) == 2:

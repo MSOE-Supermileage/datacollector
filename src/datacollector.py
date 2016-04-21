@@ -2,6 +2,9 @@
 # coding=utf-8
 
 from __future__ import print_function
+
+import traceback
+
 try:
     import queue
 except ImportError:
@@ -12,7 +15,7 @@ import threading
 import syslog
 import time
 import sys
-import os
+import signal
 from pyadb import ADB
 
 from sensors.sensor_reader import SensorReader
@@ -20,24 +23,7 @@ from sensors.hallsensor import HallSensor
 from sensors.ecu import ECUSensor
 from sensors.mock_sensor import MockSensor
 from sensors.joule_sensor import JouleSensor
-
-# region variables
-
-adb = ADB()
-# adb.set_adb_path('/opt/android-sdk-linux/platform-tools/adb')
-adb.set_adb_path('/opt/android-sdk-linux/platform-tools/adb')  # todo find this location on the pi
-
-# android connection stuff
-TCP_IP = "localhost"
-TCP_PORT = 5001
-
-LOG_FILE_NAME = "/daq_data/log-%s.csv" % time.strftime("%b%d.%H.%M")
-# LOG_FILE_NAME = "test.log"
-
-# image of latest data query cycle result
-data_points_live = dict(time=0.0)
-
-# endregion variables
+from config import ConfigManager
 
 # region threading
 # things that require global access to stuff
@@ -85,7 +71,7 @@ def log_data_thread():
                 log_error("no data to log")
                 for key in sensor_reader.get_keys():
                     data[key] = 0.0
-        # print(data)  # DEBUG
+        print(data)  # DEBUG
         # sort
         ordered_values = []
         for header in csv_headers:
@@ -101,6 +87,11 @@ def adb_publish_thread():
     data point looked like in JSON form.
     sends as fast as possible.
     """
+    adb = ADB()
+    adb.set_adb_path(config_man.get_adb_path())
+
+    hud_inet_addr = config_man.get_android_inet_address()
+
     while not HALT:
         adb.wait_for_device()  # block until a device comes along
         err, dev = adb.get_devices()
@@ -110,15 +101,16 @@ def adb_publish_thread():
 
         # lol don't connect multiple phones m8
         adb.set_target_device(dev[0])
-        adb.forward_socket('tcp:' + str(TCP_PORT), 'tcp:' + str(TCP_PORT))
+        adb.forward_socket('tcp:' + str(hud_inet_addr[1]), 'tcp:' + str(hud_inet_addr[1]))
 
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.connect((TCP_IP, TCP_PORT))
+            s.connect(hud_inet_addr)
             while not HALT:
                 s.send((json.dumps(data_points_live) + "\n").encode("utf-8"))
                 time.sleep(.1)
         except Exception as e:
+            traceback.print_exc()
             log_error(str(e))
             time.sleep(1)
         finally:
@@ -152,85 +144,110 @@ def log_error(message):
         print(message, file=sys.stderr)
 
 
+# noinspection PyUnusedLocal
+def sigint_handler(_signo, _stack_frame):
+    global HALT
+    """
+    handle sigint - Ctrl-C / IntelliJ Halt
+    :param _signo: not used
+    :param _stack_frame: not used
+    """
+    HALT = True
+    for t_name, t in all_threads:
+        if type(t) is threading.Thread and t.is_alive():
+            t.join()
+    if log_file:
+        log_file.flush()
+        log_file.close()
+    syslog.syslog(syslog.LOG_INFO, "done.")
+
 # endregion helpers
 
 
-# region main
-
-def main():
-    global HALT
-
-    # start all of the threads
-    all_threads = list(subscriber_pool.items()) + list(publisher_pool.items())
-    for t_name, t in all_threads:
-        if type(t) == threading.Thread:
-            t.start()
-
-    try:
-        while 1:
-            # heartbeat every second
-            for t_name, t in all_threads:
-                msg = "%s_thread_alive: %r" % (t_name, t.is_alive())
-                log_message(msg)
-            # spinlock is bad - this is slightly less bad
-            time.sleep(1)
-    except KeyboardInterrupt:  # if we are running headless in the car, it does not shut off until car turnoff.
-        syslog.syslog(syslog.LOG_INFO, "keyboard_interrupt: quitting...")
-        # queue up quitting
-        HALT = True
-    finally:
-        for t_name, t in all_threads:
-            if type(t) is threading.Thread and t.is_alive():
-                t.join()
-        log_file.flush()
-        log_file.close()
-        syslog.syslog(syslog.LOG_INFO, "done.")
-
-
-if __name__ == '__main__':
-    if __debug__:
-        print("debug mode enabled.")
-    
-    # initialize thread pooling
-
-    # managing and joining multiple async inputs is difficult and messy
-    subscriber_pool = {"all": threading.Thread(target=sensor_subscriber_thread, args=())}
-
-    publisher_pool = {
-        "android_connection": threading.Thread(target=adb_publish_thread, args=()),
-        "logging": threading.Thread(target=log_data_thread, args=())
-    }
-
-    # initialize sensors
-
-    # aggregate different sensors based on environment variable describing car type
-    car_type = os.environ.get("DAQ_CAR_TYPE")
-
-    if car_type == "electric":
-        sensor_readers = [SensorReader("hall", HallSensor())]
-        sensor_readers = [SensorReader("joule", JouleSensor())]
-    elif car_type == "gas":
-        sensor_readers = [
-            SensorReader("hall", HallSensor()),
-            SensorReader("ecu", ECUSensor())
-        ]
-    elif car_type == "development":
-        sensor_readers = [SensorReader("mock", MockSensor())]
-    else:
-        # msg = "environment: DAQ_CAR_TYPE not set. try 'gas' or 'electric'."
-        # syslog.syslog(syslog.LOG_ERR, msg)
-        # raise RuntimeError(msg)
-        sensor_readers = [SensorReader("hall", HallSensor())]
-
+def init_log():
+    global log_file, csv_headers
     # initialize log file csv header
-    log_file = open(LOG_FILE_NAME, 'a', 0)
+    log_file = open(config_man.get_log_dir() + "log-%s.csv" % time.strftime("%b%d.%H.%M"), 'a', 0)
     csv_headers = []
     for sr in sensor_readers:
         csv_headers += sr.get_keys()
 
     log_file.write(','.join(csv_headers) + "\n")
 
+
+def init_sensors():
+    global sensor_readers
+
+    for sensor in config_man.get_sensors():
+        if sensor == 'hall':
+            sensor_readers.append(SensorReader('hall', HallSensor()))
+        elif sensor == 'ecu':
+            sensor_readers.append(SensorReader('ecu', ECUSensor()))
+        elif sensor == 'joule':
+            sensor_readers.append(SensorReader('joule', JouleSensor()))  # in development
+        else:
+            sensor_readers.append(SensorReader('mock', MockSensor()))
+
+
+def init_threads():
+    global all_threads
+
+    # managing and joining multiple async inputs is difficult and messy
+    subscriber_pool = {"subscribers": threading.Thread(target=sensor_subscriber_thread, args=())}
+
+    publisher_pool = {
+        "android_connection": threading.Thread(target=adb_publish_thread, args=()),
+        "logging": threading.Thread(target=log_data_thread, args=())
+    }
+
+    all_threads = list(subscriber_pool.items()) + list(publisher_pool.items())
+
+
+# region main
+
+
+def main():
+    global HALT
+    global all_threads
+
+    init_sensors()
+    init_log()
+    init_threads()
+
+    # start all of the threads
+    for t_name, t in all_threads:
+        if type(t) == threading.Thread:
+            t.start()
+
+    while not HALT:
+        # heartbeat every second
+        for t_name, t in all_threads:
+            if not t.is_alive():
+                log_error("%s thread has entered a faulted state!" % t_name)
+        print("data point live: %s" % data_points_live)
+        time.sleep(1)
+
+
+if __name__ == '__main__':
+    if __debug__:
+        print("debug mode enabled.")
+
+    signal.signal(signal.SIGINT, sigint_handler)
+
+    # globals
+    if len(sys.argv) > 1:
+        config_man = ConfigManager(sys.argv[1])
+    else:
+        config_man = ConfigManager()
+
+    log_file = None
+    sensor_readers = []
+    csv_headers = []
     HALT = False
+    all_threads = []
+
+    # image of latest data query cycle result
+    data_points_live = dict(time=0.0)
 
     main()
 

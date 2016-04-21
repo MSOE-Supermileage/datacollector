@@ -5,6 +5,7 @@ from __future__ import division
 from sensor import BaseSensor
 import serial
 import time
+import sys
 
 
 class ECUSensor(BaseSensor):
@@ -60,7 +61,6 @@ class ECUSensor(BaseSensor):
                 results[dp] = 0.0
         return results
 
-    @staticmethod
     def get_keys(self):
         return [
             'ecu_time',
