@@ -110,7 +110,8 @@ def adb_publish_thread():
                 s.send((json.dumps(data_points_live) + "\n").encode("utf-8"))
                 time.sleep(.1)
         except Exception as e:
-            traceback.print_exc()
+            if __debug__:
+                traceback.print_exc()
             log_error(str(e))
             time.sleep(1)
         finally:
@@ -224,7 +225,7 @@ def main():
         for t_name, t in all_threads:
             if not t.is_alive():
                 log_error("%s thread has entered a faulted state!" % t_name)
-        print("data point live: %s" % data_points_live)
+        # print("data point live: %s" % data_points_live)
         time.sleep(1)
 
 
