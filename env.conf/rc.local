@@ -18,11 +18,9 @@ set -x
 #/usr/bin/printf "         My IP address is\033[0;31m `/sbin/ifconfig | grep "inet addr" | grep -v "127.0.0.1" | awk '{ print $2 }' | awk -F: '{ print $2 }'` \033[0m\n" > /dev/console
 
 export HOME=/root
+export PYTHONOPTIMIZE=2
 
 adb devices
-
-export PYTHONOPTIMIZE=2
-export DAQ_CAR_TYPE=gas
 
 python /usr/local/src/datacollector/datacollector.py
 
